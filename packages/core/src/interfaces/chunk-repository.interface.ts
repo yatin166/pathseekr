@@ -1,6 +1,6 @@
 import type { Chunk, StoredChunk } from '@spyglass/shared'
 
-export interface ChunkRepositoryInterface {
+export interface IChunkRepository {
     save(chunk: Chunk): Promise<void>;
     saveBatch(chunks: Chunk[]): Promise<void>;
     saveEmbedding(chunkId: string, embedding: number[]): Promise<void>;

@@ -3,7 +3,7 @@ export interface EmbeddingResult {
     readonly tokenCount: number;
 }
 
-export interface EmbeddingProviderInterface {
+export interface IEmbeddingProvider {
     readonly modelName: string;
     readonly dimensions: number;
 

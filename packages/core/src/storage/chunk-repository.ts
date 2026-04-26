@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify'
 import type { Chunk, StoredChunk } from '@spyglass/shared'
-import type { ChunkRepositoryInterface } from '../interfaces/chunk-repository.interface'
+import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
 import { DatabaseConnection } from './database'
 import { TYPES } from '../container/types'
 import { mapChunk, mapStoredChunk, embeddingToBuffer } from './mappers'
@@ -8,7 +8,7 @@ import type { RawChunk, RawChunkWithEmbedding } from './schema'
 import {ChunkQueries} from "./queries/chunk-queries";
 
 @injectable()
-export class ChunkRepository implements ChunkRepositoryInterface {
+export class ChunkRepository implements IChunkRepository {
     constructor(
         @inject(TYPES.DatabaseConnection)
         private readonly connection: DatabaseConnection

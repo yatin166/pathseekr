@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify'
 import type { Document, DocumentSummary, IndexStats } from '@spyglass/shared'
-import type { DocumentRepositoryInterface } from '../interfaces/document-repository.interface'
+import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import { DatabaseConnection } from './database'
 import { TYPES } from '../container/types'
 import { mapDocument, mapDocumentSummary } from './mappers'
@@ -8,7 +8,7 @@ import type { RawDocument, RawDocumentSummary } from './schema'
 import {DocumentQueries} from "./queries/document-queries";
 
 @injectable()
-export class DocumentRepository implements DocumentRepositoryInterface {
+export class DocumentRepository implements IDocumentRepository {
     constructor(
         @inject(TYPES.DatabaseConnection)
         private readonly connection: DatabaseConnection
