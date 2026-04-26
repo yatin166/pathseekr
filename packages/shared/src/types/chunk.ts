@@ -1,0 +1,30 @@
+export type Language = | 'typescript' | 'javascript' | 'python' | 'java' | 'unknown'
+
+export type ChunkType = | 'function' | 'method' | 'class' | 'interface' | 'type' | 'module' | 'paragraph'
+
+export interface Chunk {
+    readonly id: string;
+    readonly documentId: string;
+    readonly content: string;
+    readonly chunkType: ChunkType;
+    readonly language: Language;
+    readonly name: string;
+    readonly startLine: number;
+    readonly endLine: number;
+    readonly metadata: ChunkMetadata;
+    readonly createdAt: Date;
+}
+
+export interface ChunkMetadata {
+    readonly signature?: string;
+    readonly docstring?: string;
+    readonly parentName?: string;
+    readonly isExported?: boolean;
+    readonly isAsync?: boolean;
+    readonly parameters?: string[];
+    readonly returnType?: string;
+}
+
+export interface StoredChunk extends Chunk {
+    readonly embedding?: number[]
+}
