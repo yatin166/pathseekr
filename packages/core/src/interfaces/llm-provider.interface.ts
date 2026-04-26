@@ -3,7 +3,7 @@ export interface GenerateOptions {
     readonly temperature?: number;
 }
 
-export interface ILLMProvider {
+export interface LlmProviderInterface {
     readonly modelName: string;
 
     generate(prompt: string, context: string, options?: GenerateOptions): Promise<string>;
