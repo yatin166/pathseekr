@@ -18,6 +18,11 @@ import type { IDocumentRepository } from '../interfaces/IDocumentRepository'
 import type { IIndexer } from '../interfaces/IIndexer'*/
 import type { SpyglassConfig } from '@spyglass/shared'
 import { TYPES } from './types'
+import {DatabaseConnection} from "../storage/database";
+import {IChunkRepository} from "../interfaces/IChunkRepository";
+import {ChunkRepository} from "../storage/ChunkRepository";
+import {IDocumentRepository} from "../interfaces/IDocumentRepository";
+import {DocumentRepository} from "../storage/DocumentRepository";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -26,13 +31,17 @@ export function createContainer(config: SpyglassConfig): Container {
         .bind<SpyglassConfig>(TYPES.SpyglassConfig)
         .toConstantValue(config)
 
+    container
+        .bind<DatabaseConnection>(TYPES.DatabaseConnection)
+        .to(DatabaseConnection)
+
     /*container
         .bind<IEmbeddingProvider>(TYPES.IEmbeddingProvider)
         .to(OllamaEmbeddingProvider)
 
     container
         .bind<ILLMProvider>(TYPES.ILLMProvider)
-        .to(OllamaLLMProvider)
+        .to(OllamaLLMProvider)*/
 
     container
         .bind<IChunkRepository>(TYPES.IChunkRepository)
@@ -42,7 +51,7 @@ export function createContainer(config: SpyglassConfig): Container {
         .bind<IDocumentRepository>(TYPES.IDocumentRepository)
         .to(DocumentRepository)
 
-    container
+    /*container
         .bind<ParserRegistry>(TYPES.ParserRegistry)
         .to(ParserRegistry)
 
