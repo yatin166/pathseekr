@@ -1,7 +1,5 @@
 import 'reflect-metadata'
-
 import { Container } from 'inversify'
-
 /*import { OllamaEmbeddingProvider } from '../providers/embedding/OllamaEmbeddingProvider'
 import { OllamaLLMProvider } from '../providers/llm/OllamaLLMProvider'
 import { ChunkRepository } from '../storage/ChunkRepository'
@@ -19,10 +17,10 @@ import type { IIndexer } from '../interfaces/IIndexer'*/
 import type { SpyglassConfig } from '@spyglass/shared'
 import { TYPES } from './types'
 import {DatabaseConnection} from "../storage/database";
-import {IChunkRepository} from "../interfaces/IChunkRepository";
-import {ChunkRepository} from "../storage/ChunkRepository";
-import {IDocumentRepository} from "../interfaces/IDocumentRepository";
-import {DocumentRepository} from "../storage/DocumentRepository";
+import {ChunkRepositoryInterface} from "../interfaces/chunk-repository.interface";
+import {DocumentRepositoryInterface} from "../interfaces/document-repository.interface";
+import {ChunkRepository} from "../storage/chunk-repository";
+import {DocumentRepository} from "../storage/document-repository";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -44,11 +42,11 @@ export function createContainer(config: SpyglassConfig): Container {
         .to(OllamaLLMProvider)*/
 
     container
-        .bind<IChunkRepository>(TYPES.IChunkRepository)
+        .bind<ChunkRepositoryInterface>(TYPES.IChunkRepository)
         .to(ChunkRepository)
 
     container
-        .bind<IDocumentRepository>(TYPES.IDocumentRepository)
+        .bind<DocumentRepositoryInterface>(TYPES.IDocumentRepository)
         .to(DocumentRepository)
 
     /*container

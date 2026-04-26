@@ -5,6 +5,6 @@ export interface IndexOptions {
     readonly skipEmbedding?: boolean;
 }
 
-export interface IIndexer {
+export interface IndexerInterface {
     index(sourcePath: string, options?: IndexOptions, onProgress?: (progress: IndexingProgress) => void): Promise<IngestionJob>;
 }

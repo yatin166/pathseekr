@@ -6,7 +6,7 @@ export interface ParseResult {
     readonly totalLines: number;
 }
 
-export interface IDocumentParser {
+export interface DocumentParserInterface {
     readonly supportedExtensions: readonly string[];
 
     parse(filePath: string, content: string): Promise<ParseResult>;

@@ -1,6 +1,6 @@
 import type { Document, DocumentSummary, IndexStats } from '@spyglass/shared'
 
-export interface IDocumentRepository {
+export interface DocumentRepositoryInterface {
     save(document: Document): Promise<void>;
     findByPath(sourcePath: string): Promise<Document | null>;
     findById(id: string): Promise<Document | null>;

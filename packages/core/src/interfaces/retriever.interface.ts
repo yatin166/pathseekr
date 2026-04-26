@@ -1,6 +1,6 @@
 import type { RetrievalResult, SearchQuery } from '@spyglass/shared'
 
-export interface IRetriever {
+export interface RetrieverInterface {
     search(query: SearchQuery): Promise<RetrievalResult[]>;
     isReady(): Promise<boolean>;
 }
