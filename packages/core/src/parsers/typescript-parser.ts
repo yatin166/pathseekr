@@ -1,14 +1,8 @@
 import 'reflect-metadata'
-
 import { injectable } from 'inversify'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const TSLanguage = require('tree-sitter-typescript').typescript
-
 import type { Language } from '@spyglass/shared'
-import {
-    BaseParser,
-    type ExtractedNode, TreeSitterLanguage,
-} from './base/base-parser'
+import { BaseParser, type ExtractedNode, TreeSitterLanguage } from './base/base-parser'
 import Parser from 'tree-sitter'
 
 
@@ -35,11 +29,7 @@ export class TypeScriptParser extends BaseParser {
     protected readonly language = TSLanguage as TreeSitterLanguage
     protected readonly languageId: Language = 'typescript'
 
-    protected extractNodes(
-        rootNode: Parser.SyntaxNode,
-        content: string,
-        lines: string[]
-    ): ExtractedNode[] {
+    protected extractNodes(rootNode: Parser.SyntaxNode, content: string, lines: string[]): ExtractedNode[] {
         const extracted: ExtractedNode[] = []
 
         this.walk(rootNode, (node) => {
@@ -238,11 +228,7 @@ export class TypeScriptParser extends BaseParser {
         ]
     }
 
-    private extractTypeAlias(
-        node: Parser.SyntaxNode,
-        originalNode: Parser.SyntaxNode,
-        content: string
-    ): ExtractedNode[] {
+    private extractTypeAlias(node: Parser.SyntaxNode, originalNode: Parser.SyntaxNode, content: string): ExtractedNode[] {
         const name = this.getFieldText(node, 'name', content)
         if (!name) {
             return []
@@ -325,9 +311,7 @@ export class TypeScriptParser extends BaseParser {
         return results
     }
 
-    private unwrapExport(
-        node: Parser.SyntaxNode
-    ): Parser.SyntaxNode {
+    private unwrapExport(node: Parser.SyntaxNode): Parser.SyntaxNode {
         if (node.type !== TS_NODE_TYPES.EXPORT_STATEMENT) {
             return node
         }
@@ -347,10 +331,7 @@ export class TypeScriptParser extends BaseParser {
         return false
     }
 
-    private extractFunctionSignature(
-        node: Parser.SyntaxNode,
-        content: string
-    ): string {
+    private extractFunctionSignature(node: Parser.SyntaxNode, content: string): string {
         const params = this.getChildByField(node, 'parameters')
         const returnType = this.getChildByField(node, 'return_type')
         const name = this.getFieldText(node, 'name', content)
@@ -366,10 +347,7 @@ export class TypeScriptParser extends BaseParser {
         return `${asyncPrefix}${name ?? 'anonymous'}${paramsText}${returnText}`.trim()
     }
 
-    private extractParameters(
-        node: Parser.SyntaxNode,
-        content: string
-    ): string[] {
+    private extractParameters(node: Parser.SyntaxNode, content: string): string[] {
         const params = this.getChildByField(node, 'parameters')
         if (!params) {
             return []
@@ -397,10 +375,7 @@ export class TypeScriptParser extends BaseParser {
         return paramNames
     }
 
-    private extractReturnType(
-        node: Parser.SyntaxNode,
-        content: string
-    ): string | undefined {
+    private extractReturnType(node: Parser.SyntaxNode, content: string): string | undefined {
         const returnType = this.getChildByField(node, 'return_type')
         if (!returnType) return undefined
         return this.getNodeText(returnType, content)
