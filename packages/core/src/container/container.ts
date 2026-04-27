@@ -17,8 +17,8 @@ import type { IIndexer } from '../interfaces/IIndexer'*/
 import type { SpyglassConfig } from '@spyglass/shared'
 import { TYPES } from './types'
 import {DatabaseConnection} from "../storage/database";
-import {ChunkRepositoryInterface} from "../interfaces/chunk-repository.interface";
-import {DocumentRepositoryInterface} from "../interfaces/document-repository.interface";
+import {IChunkRepository} from "../interfaces/chunk-repository.interface";
+import {IDocumentRepository} from "../interfaces/document-repository.interface";
 import {ChunkRepository} from "../storage/chunk-repository";
 import {DocumentRepository} from "../storage/document-repository";
 
@@ -42,11 +42,11 @@ export function createContainer(config: SpyglassConfig): Container {
         .to(OllamaLLMProvider)*/
 
     container
-        .bind<ChunkRepositoryInterface>(TYPES.IChunkRepository)
+        .bind<IChunkRepository>(TYPES.IChunkRepository)
         .to(ChunkRepository)
 
     container
-        .bind<DocumentRepositoryInterface>(TYPES.IDocumentRepository)
+        .bind<IDocumentRepository>(TYPES.IDocumentRepository)
         .to(DocumentRepository)
 
     /*container
