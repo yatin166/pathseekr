@@ -2,6 +2,9 @@ import 'reflect-metadata'
 import { injectable } from 'inversify'
 import type { IDocumentParser } from '../interfaces/document-parser.interface'
 import { TypeScriptParser } from './typescript-parser'
+import {JavaScriptParser} from "./javascript-parser";
+import {PythonParser} from "./python-parser";
+import {JavaParser} from "./java-parser";
 
 
 @injectable()
@@ -37,9 +40,9 @@ export class ParserRegistry {
     constructor() {
         this.parsers = [
             new TypeScriptParser(),
-            // new JavaScriptParser(),
-            // new PythonParser(),
-            // new JavaParser(),
+            new JavaScriptParser(),
+            new PythonParser(),
+            new JavaParser(),
         ]
     }
 

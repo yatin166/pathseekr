@@ -29,8 +29,11 @@ export abstract class BaseParser implements IDocumentParser {
         return this.supportedExtensions.includes(ext)
     }
 
-    async parse(filePath: string, content: string): Promise<ParseResult> {
-        console.log('Parsing file:', filePath)
+    async parse(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _filePath: string,
+        content: string
+    ): Promise<ParseResult> {
         const parser = this.getParser()
         const tree = parser.parse(content)
         const lines = content.split('\n')
