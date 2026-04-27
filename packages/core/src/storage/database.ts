@@ -61,6 +61,14 @@ export class DatabaseConnection {
         `)
 
         const migrationsDir = path.join(__dirname, 'migrations')
+
+        if (!fs.existsSync(migrationsDir)) {
+            throw new Error(
+                `Migrations directory not found at ${migrationsDir}. ` +
+                `Run npm run build in packages/core to copy migration files.`
+            )
+        }
+
         const migrationFiles = fs
             .readdirSync(migrationsDir)
             .filter((f) => f.endsWith('.sql'))
