@@ -55,7 +55,7 @@ export class CodeTokenizer implements ITokenizer {
         }
     }
 
-    private extractTerms(text: string): string[] {
+    /*private extractTerms(text: string): string[] {
         const terms: string[] = []
         const rawTokens = text.split(DELIMITER_PATTERN)
 
@@ -77,6 +77,49 @@ export class CodeTokenizer implements ITokenizer {
             const firstSubToken = subTokens[0]?.toLowerCase()
 
             if (this.isValidTerm(wholeToken) && wholeToken !== firstSubToken) {
+                terms.push(wholeToken)
+            }
+        }
+
+        return terms
+    }*/
+
+    private extractTerms(text: string): string[] {
+        const terms: string[] = []
+        const rawTokens = text.split(DELIMITER_PATTERN)
+
+        for (const token of rawTokens) {
+            if (!token) continue
+
+            const subTokens = this.splitCamelCase(token)
+
+            // Add individual sub-tokens
+            for (const subToken of subTokens) {
+                const normalized = subToken.toLowerCase()
+                if (this.isValidTerm(normalized)) {
+                    terms.push(normalized)
+                }
+            }
+
+            // Add intermediate compounds for better matching
+            // TypeScriptParser → ['typescript', 'typescriptparser']
+            for (let i = 0; i < subTokens.length - 1; i++) {
+                const compound = subTokens
+                    .slice(i, i + 2)
+                    .join('')
+                    .toLowerCase()
+                if (this.isValidTerm(compound)) {
+                    terms.push(compound)
+                }
+            }
+
+            // Add the full token as-is
+            const wholeToken = token.toLowerCase()
+            const firstSubToken = subTokens[0]?.toLowerCase()
+            if (
+                this.isValidTerm(wholeToken) &&
+                wholeToken !== firstSubToken
+            ) {
                 terms.push(wholeToken)
             }
         }
