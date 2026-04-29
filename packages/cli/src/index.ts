@@ -5,6 +5,7 @@ import { Command } from 'commander'
 import { indexCommand } from './commands/index'
 import { statusCommand } from './commands/status'
 import { searchCommand } from './commands/search'
+import { embedCommand } from "./commands/embed";
 
 const program = new Command()
 
@@ -16,5 +17,6 @@ program
 program.addCommand(indexCommand)
 program.addCommand(statusCommand)
 program.addCommand(searchCommand)
+program.addCommand(embedCommand)
 
 program.parse(process.argv)
