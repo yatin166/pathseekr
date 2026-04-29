@@ -32,13 +32,13 @@ export class ChunkRepository implements IChunkRepository {
         insertMany(chunks)
     }
 
-    async saveEmbedding(chunkId: string, embedding: number[]): Promise<void> {
+    async saveEmbedding(chunkId: string, embedding: number[], modelName: string): Promise<void> {
         const db = this.connection.getDb()
 
         db.prepare(ChunkQueries.INSERT_EMBEDDING).run({
             chunkId,
             embedding: embeddingToBuffer(embedding),
-            modelName: 'nomic-embed-text',
+            modelName: modelName,
             dimensions: embedding.length,
         })
     }

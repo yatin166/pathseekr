@@ -17,6 +17,10 @@ import { ITokenizer } from "../retrieval/interfaces/tokenizer.interface";
 import { CodeTokenizer } from "../retrieval/tokenizer/code-tokenizer";
 import { BM25IndexBuilder } from "../retrieval/bm25-index-builder";
 import { BM25Retriever } from "../retrieval/bm25-retriever";
+import {IEmbeddingProvider} from "../interfaces/embedding-provider.interface";
+import {OllamaEmbeddingProvider} from "../providers/embedding/ollama-embedding-provider";
+import {VectorRetriever} from "../retrieval/vector-retriever";
+import {EmbeddingPipeline} from "../retrieval/embedding-pipeline";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -74,6 +78,19 @@ export function createContainer(config: SpyglassConfig): Container {
     container
         .bind<BM25Retriever>(TYPES.BM25Retriever)
         .to(BM25Retriever)
+
+    // Vector Embedding Retrieval components
+    container
+        .bind<IEmbeddingProvider>(TYPES.IEmbeddingProvider)
+        .to(OllamaEmbeddingProvider)
+
+    container
+        .bind<VectorRetriever>(TYPES.VectorRetriever)
+        .to(VectorRetriever)
+
+    container
+        .bind<EmbeddingPipeline>(TYPES.EmbeddingPipeline)
+        .to(EmbeddingPipeline)
 
     return container
 }

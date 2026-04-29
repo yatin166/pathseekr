@@ -21,13 +21,17 @@ const envSchema = z.object({
         .default('http://localhost:11434'),
     OLLAMA_EMBEDDING_MODEL: z
         .string()
-        .default('nomic-embed-text'),
+        .default('embeddinggemma'),
     OLLAMA_LLM_MODEL: z
         .string()
         .default('gemma3:8b'),
     SPYGLASS_DATA_DIR: z
         .string()
         .default('~/.spyglass'),
+    OLLAMA_EMBEDDING_DIMENSIONS: z
+        .string()
+        .default('768')
+        .transform(Number),
     API_PORT: z
         .string()
         .default('3001')
@@ -86,7 +90,7 @@ function buildConfig(): SpyglassConfig {
             provider: 'ollama',
             model: env.OLLAMA_EMBEDDING_MODEL,
             baseUrl: env.OLLAMA_BASE_URL,
-            dimensions: 768,
+            dimensions: env.OLLAMA_EMBEDDING_DIMENSIONS,
             batchSize: env.EMBEDDING_BATCH_SIZE,
         },
         llm: {

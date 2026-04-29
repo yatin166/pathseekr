@@ -13,6 +13,7 @@ import { ChecksumService } from './checksum-service'
 import { ChunkBuilder } from './chunk-builder'
 import { ParserRegistry } from '../parsers/parser-registry'
 import {BM25IndexBuilder} from "../retrieval/bm25-index-builder";
+import {EmbeddingPipeline} from "../retrieval/embedding-pipeline";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
@@ -41,6 +42,9 @@ export class CodebaseIndexer implements IIndexer {
 
         @inject(TYPES.BM25IndexBuilder)
         private readonly bm25IndexBuilder: BM25IndexBuilder,
+
+        @inject(TYPES.EmbeddingPipeline)
+        private readonly embeddingPipeline: EmbeddingPipeline,
     ) {}
 
     async index(sourcePath: string, options: IndexOptions = {}, onProgress?: (progress: IndexingProgress) => void): Promise<IngestionJob> {
@@ -188,6 +192,10 @@ export class CodebaseIndexer implements IIndexer {
         await this.chunkRepository.saveBatch(chunks)
 
         await this.bm25IndexBuilder.buildForDocument(documentId)
+
+        if (!options.skipEmbedding) {
+            await this.embeddingPipeline.embedForDocument(documentId)
+        }
 
         return { chunksCreated: chunks.length }
     }

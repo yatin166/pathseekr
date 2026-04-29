@@ -9,3 +9,5 @@ export type { IDocumentRepository } from './interfaces/document-repository.inter
 export type { IRetriever } from './interfaces/retriever.interface'
 export type { IIndexer, IndexOptions } from './interfaces/indexer.interface'
 export type { BM25Retriever } from './retrieval/bm25-retriever'
+export { EmbeddingPipeline } from './retrieval/embedding-pipeline'
+export { VectorRetriever } from './retrieval/vector-retriever'
