@@ -6,9 +6,9 @@ import { DatabaseConnection } from '../storage/database'
 import { TYPES } from '../container/types'
 import type { ITokenizer } from './interfaces/tokenizer.interface'
 import { BM25Queries } from './queries/bm25-queries'
+import { type RawChunkWithDocument, RetrievalQueries } from "./queries/retrieval-queries";
 import { mapRetrievalResult } from './mappers'
 import {
-    type RawChunkWithDocument,
     type RawCorpusStats,
     type RawDFRow,
     type RawTermRow
@@ -107,7 +107,7 @@ export class BM25Retriever implements IRetriever {
 
         const chunkIds = ranked.map(([id]) => id)
         const rows = db
-            .prepare(BM25Queries.CHUNKS_WITH_DOCUMENTS(chunkIds.length))
+            .prepare(RetrievalQueries.CHUNKS_WITH_DOCUMENTS(chunkIds.length))
             .all(...chunkIds) as RawChunkWithDocument[]
 
         const rowMap = new Map<string, RawChunkWithDocument>(
