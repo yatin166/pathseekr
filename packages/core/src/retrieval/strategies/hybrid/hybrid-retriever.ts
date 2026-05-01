@@ -39,7 +39,10 @@ export class HybridRetriever implements IRetriever {
 
         const fused = this.fuseWithRRF(bm25Results, vectorResults, this.config.retrieval.bm25Weight)
 
-        return fused
+        const reranked = this.applyNameBoost(fused, query.query)
+        reranked.sort((a, b) => b.score - a.score)
+
+        return reranked
             .slice(0, query.limit)
             .map((result, index) => ({
                 ...result,
@@ -94,5 +97,42 @@ export class HybridRetriever implements IRetriever {
                 }
             })
             .filter((r): r is RetrievalResult => r !== null)
+    }
+
+    private applyNameBoost(results: RetrievalResult[], query: string): RetrievalResult[] {
+        const queryTerms = query
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((t) => t.length > 1)
+
+        if (queryTerms.length === 0) {
+            return results
+        }
+
+        const resultsWithBoost = results.map((result) => {
+            const chunkName = result.chunk.name.toLowerCase()
+            const matchCount = queryTerms.filter((term) => chunkName.includes(term)).length
+
+            if (matchCount === 0) {
+                return result
+            }
+
+            /*
+            * Partial or full name match — boost proportionally
+            * Example:
+            * Query: "get user data"
+            * Chunk name: "getUserData" -> matches all 3 terms -> boost = 0.25
+            * Chunk name: "getData" -> matches 2 terms -> boost = 0.167
+            */
+            const matchRatio = matchCount / queryTerms.length
+            const boost = matchRatio * 0.25
+
+            return {
+                ...result,
+                score: Math.min(result.score + boost, 1.0),
+            }
+        })
+
+        return resultsWithBoost
     }
 }
