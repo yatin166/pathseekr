@@ -21,6 +21,7 @@ import {IEmbeddingProvider} from "../interfaces/embedding-provider.interface";
 import {OllamaEmbeddingProvider} from "../providers/embedding/ollama-embedding-provider";
 import {VectorRetriever} from "../retrieval/strategies/vector/vector-retriever";
 import {EmbeddingIndexBuilder} from "../retrieval/strategies/vector/embedding-index-builder";
+import {HybridRetriever} from "../retrieval/strategies/hybrid/hybrid-retriever";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -91,6 +92,11 @@ export function createContainer(config: SpyglassConfig): Container {
     container
         .bind<EmbeddingIndexBuilder>(TYPES.EmbeddingIndexBuilder)
         .to(EmbeddingIndexBuilder)
+
+    // Hybrid Retrieval components:
+    container
+        .bind<HybridRetriever>(TYPES.HybridRetriever)
+        .to(HybridRetriever)
 
     return container
 }
