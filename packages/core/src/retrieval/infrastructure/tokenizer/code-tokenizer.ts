@@ -2,34 +2,43 @@ import 'reflect-metadata'
 import { injectable } from 'inversify'
 import type { ITokenizer, TokenizeResult } from './tokenizer.interface'
 
+const UNIVERSAL_STOP_WORDS = new Set([
+    'the', 'a', 'an', 'is', 'it', 'to', 'of', 'in', 'on',
+    'at', 'by', 'be', 'has', 'had', 'was', 'are', 'were',
+    'will', 'would', 'could', 'should', 'may', 'might',
+    'must', 'can', 'than', 'that', 'this', 'with', 'not',
+    'and', 'or', 'but', 'for', 'from', 'as', 'into', 'if',
+    'else', 'do', 'new', 'true', 'false', 'null', 'void',
+    'return', 'import', 'export',
+])
 
-const CODE_STOP_WORDS = new Set([
-    // JavaScript / TypeScript keywords
-    'const', 'let', 'var', 'function', 'return', 'class',
-    'import', 'export', 'default', 'from', 'new', 'this',
-    'if', 'else', 'for', 'while', 'do', 'switch', 'case',
-    'break', 'continue', 'try', 'catch', 'finally', 'throw',
-    'async', 'await', 'typeof', 'instanceof', 'void', 'null',
-    'undefined', 'true', 'false', 'super', 'extends',
-    'implements', 'interface', 'type', 'enum', 'namespace',
-    'declare', 'abstract', 'public', 'private', 'protected',
-    'static', 'readonly', 'get', 'set', 'in', 'of', 'yield',
+const LANGUAGE_STOP_WORDS = new Set([
+    // TypeScript / JavaScript
+    'const', 'let', 'var', 'function', 'class', 'interface',
+    'type', 'enum', 'namespace', 'declare', 'abstract',
+    'async', 'await', 'typeof', 'instanceof', 'super',
+    'extends', 'implements', 'readonly', 'static',
+    'public', 'private', 'protected', 'get', 'set',
+    'in', 'of', 'yield', 'default',
 
-    // Python keywords
-    'def', 'self', 'cls', 'pass', 'lambda', 'with', 'as',
-    'raise', 'except', 'assert', 'del', 'global', 'nonlocal',
-    'not', 'and', 'or', 'is', 'none',
+    // Python
+    'def', 'self', 'cls', 'pass', 'lambda', 'with',
+    'raise', 'except', 'assert', 'del', 'global',
+    'nonlocal', 'none',
 
-    // Java keywords
+    // Java
     'final', 'synchronized', 'volatile', 'transient',
     'throws', 'package', 'int', 'long', 'double', 'float',
     'boolean', 'char', 'byte', 'short',
 
-    // Common low-signal words
-    'the', 'a', 'an', 'is', 'it', 'to', 'of', 'in', 'on',
-    'at', 'by', 'be', 'has', 'had', 'was', 'are', 'were',
-    'will', 'would', 'could', 'should', 'may', 'might',
-    'must', 'can', 'than', 'that', 'with',
+    // Common across many languages
+    'switch', 'case', 'break', 'continue', 'try',
+    'catch', 'finally', 'throw', 'while', 'for',
+])
+
+const CODE_STOP_WORDS = new Set([
+    ...UNIVERSAL_STOP_WORDS,
+    ...LANGUAGE_STOP_WORDS,
 ])
 
 const MIN_TERM_LENGTH = 2
@@ -54,35 +63,6 @@ export class CodeTokenizer implements ITokenizer {
             termFrequencies,
         }
     }
-
-    /*private extractTerms(text: string): string[] {
-        const terms: string[] = []
-        const rawTokens = text.split(DELIMITER_PATTERN)
-
-        for (const token of rawTokens) {
-            if (!token) {
-                continue
-            }
-
-            const subTokens = this.splitCamelCase(token)
-
-            for (const subToken of subTokens) {
-                const normalized = subToken.toLowerCase()
-                if (this.isValidTerm(normalized)) {
-                    terms.push(normalized)
-                }
-            }
-
-            const wholeToken = token.toLowerCase()
-            const firstSubToken = subTokens[0]?.toLowerCase()
-
-            if (this.isValidTerm(wholeToken) && wholeToken !== firstSubToken) {
-                terms.push(wholeToken)
-            }
-        }
-
-        return terms
-    }*/
 
     private extractTerms(text: string): string[] {
         const terms: string[] = []

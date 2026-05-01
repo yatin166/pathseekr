@@ -1,6 +1,17 @@
 export type Language = | 'typescript' | 'javascript' | 'python' | 'java' | 'unknown'
 
-export type ChunkType = | 'function' | 'method' | 'class' | 'interface' | 'type' | 'module' | 'paragraph'
+export type ChunkType =
+    | 'function'
+    | 'method'
+    | 'class'
+    | 'interface'
+    | 'type'
+    | 'struct'
+    | 'enum'
+    | 'trait'
+    | 'impl'
+    | 'module'
+    | 'paragraph'
 
 export interface Chunk {
     readonly id: string;
