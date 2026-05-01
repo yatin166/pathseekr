@@ -1,4 +1,4 @@
-import { Tables } from '../../storage/schema'
+import { Tables } from '../../../storage/schema'
 
 export interface RawCorpusStats {
     total_chunks: number

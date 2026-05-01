@@ -1,4 +1,4 @@
-import { Tables } from '../../storage/schema'
+import { Tables } from '../../../storage/schema'
 
 export const VectorQueries = {
 
@@ -40,6 +40,11 @@ export const VectorQueries = {
             model_name = excluded.model_name,
             dimensions = excluded.dimensions
     `,
+
+    /*
+    * Get the byte length of the embedding vector to verify dimensions
+    */
+    SELECT_DIMENSIONS: `SELECT length(embedding) as byte_length FROM ${Tables.EMBEDDINGS} LIMIT 1`
 
 } as const
 

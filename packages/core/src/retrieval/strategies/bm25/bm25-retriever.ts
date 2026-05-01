@@ -1,18 +1,18 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import type { RetrievalResult, SearchQuery } from '@spyglass/shared'
-import type { IRetriever } from '../interfaces/retriever.interface'
-import { DatabaseConnection } from '../storage/database'
-import { TYPES } from '../container/types'
-import type { ITokenizer } from './interfaces/tokenizer.interface'
-import { BM25Queries } from './queries/bm25-queries'
-import { type RawChunkWithDocument, RetrievalQueries } from "./queries/retrieval-queries";
-import { mapRetrievalResult } from './mappers'
+import type { IRetriever } from '../../../interfaces/retriever.interface'
+import { DatabaseConnection } from '../../../storage/database'
+import { TYPES } from '../../../container/types'
+import type { ITokenizer } from '../../infrastructure/tokenizer/tokenizer.interface'
+import { BM25Queries } from './bm25-queries'
+import { type RawChunkWithDocument, RetrievalQueries } from "../../shared/retrieval-queries";
+import { mapRetrievalResult } from '../../shared/mappers'
 import {
     type RawCorpusStats,
     type RawDFRow,
     type RawTermRow
-} from './queries/bm25-queries'
+} from './bm25-queries'
 
 const BM25_K1 = 1.5
 const BM25_B = 0.75

@@ -1,11 +1,11 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import Database from 'better-sqlite3'
-import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
-import { DatabaseConnection } from '../storage/database'
-import { TYPES } from '../container/types'
-import type { ITokenizer } from './interfaces/tokenizer.interface'
-import { BM25Queries } from './queries/bm25-queries'
+import type { IChunkRepository } from '../../../interfaces/chunk-repository.interface'
+import { DatabaseConnection } from '../../../storage/database'
+import { TYPES } from '../../../container/types'
+import type { ITokenizer } from '../../infrastructure/tokenizer/tokenizer.interface'
+import { BM25Queries } from './bm25-queries'
 
 @injectable()
 export class BM25IndexBuilder {

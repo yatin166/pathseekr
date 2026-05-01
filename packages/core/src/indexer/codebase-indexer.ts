@@ -12,8 +12,8 @@ import { FileScanner } from './file-scanner'
 import { ChecksumService } from './checksum-service'
 import { ChunkBuilder } from './chunk-builder'
 import { ParserRegistry } from '../parsers/parser-registry'
-import {BM25IndexBuilder} from "../retrieval/bm25-index-builder";
-import {EmbeddingPipeline} from "../retrieval/embedding-pipeline";
+import {BM25IndexBuilder} from "../retrieval/strategies/bm25/bm25-index-builder";
+import {EmbeddingIndexBuilder} from "../retrieval/strategies/vector/embedding-index-builder";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
@@ -43,8 +43,8 @@ export class CodebaseIndexer implements IIndexer {
         @inject(TYPES.BM25IndexBuilder)
         private readonly bm25IndexBuilder: BM25IndexBuilder,
 
-        @inject(TYPES.EmbeddingPipeline)
-        private readonly embeddingPipeline: EmbeddingPipeline,
+        @inject(TYPES.EmbeddingIndexBuilder)
+        private readonly embeddingIndexBuilder: EmbeddingIndexBuilder,
     ) {}
 
     async index(sourcePath: string, options: IndexOptions = {}, onProgress?: (progress: IndexingProgress) => void): Promise<IngestionJob> {
@@ -194,7 +194,7 @@ export class CodebaseIndexer implements IIndexer {
         await this.bm25IndexBuilder.buildForDocument(documentId)
 
         if (!options.skipEmbedding) {
-            await this.embeddingPipeline.embedForDocument(documentId)
+            await this.embeddingIndexBuilder.embedForDocument(documentId)
         }
 
         return { chunksCreated: chunks.length }

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { injectable } from 'inversify'
-import type { ITokenizer, TokenizeResult } from '../interfaces/tokenizer.interface'
+import type { ITokenizer, TokenizeResult } from './tokenizer.interface'
 
 
 const CODE_STOP_WORDS = new Set([
