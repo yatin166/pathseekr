@@ -1,8 +1,23 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import path from 'path'
-import {createContainer, IRetriever, TYPES} from '@spyglass/core'
+import { createContainer, IRetriever, TYPES } from '@spyglass/core'
 import { config } from '../config'
+import {RetrievalStrategy} from "@spyglass/shared";
+
+const getRetriever = (strategy: RetrievalStrategy): IRetriever => {
+    const container = createContainer(config)
+    switch (strategy) {
+        case 'bm25':
+            return container.get<IRetriever>(TYPES.BM25Retriever)
+        case 'vector':
+            return container.get<IRetriever>(TYPES.VectorRetriever)
+        case 'hybrid':
+            return container.get<IRetriever>(TYPES.HybridRetriever)
+        default:
+            throw new Error(`Unknown retrieval strategy: ${strategy}`)
+    }
+}
 
 export const searchCommand = new Command('search')
     .description('Search your indexed codebase')
@@ -14,19 +29,16 @@ export const searchCommand = new Command('search')
     )
     .option(
         '-s, --strategy <strategy>',
-        'Retrieval strategy: bm25, vector',
-        'bm25'
+        'Retrieval strategy: hybrid, bm25, vector',
+        'hybrid'
     )
     .action(async (query: string, options) => {
         const limit = parseInt(options.limit as string, 10)
-        const strategy = options.strategy as string
+        const strategy = options.strategy as RetrievalStrategy
 
-        console.log(`\n${chalk.bold('Spyglass')} ${chalk.dim('—')} searching for ${chalk.cyan(`"${query}"`)}\n`)
+        console.log(`\n${chalk.bold('Spyglass')} ${chalk.dim('—')} searching for ${chalk.cyan(`"${query}"`)} using ${chalk.cyan(`"${strategy}"`)} strategy\n`)
 
-        const container = createContainer(config)
-        const retriever = strategy === 'vector'
-            ? container.get<IRetriever>(TYPES.VectorRetriever)
-            : container.get<IRetriever>(TYPES.BM25Retriever)
+        const retriever = getRetriever(strategy)
 
         const ready = await retriever.isReady()
         if (!ready) {
@@ -36,7 +48,7 @@ export const searchCommand = new Command('search')
 
         const results = await retriever.search({
             query,
-            strategy: 'bm25',
+            strategy,
             limit,
         })
 
