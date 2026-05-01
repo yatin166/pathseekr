@@ -1,19 +1,22 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
-import type { RetrievalResult, SearchQuery } from '@spyglass/shared'
-import type { IRetriever } from '../interfaces/retriever.interface'
-import type { IEmbeddingProvider } from '../interfaces/embedding-provider.interface'
-import { DatabaseConnection } from '../storage/database'
-import { TYPES } from '../container/types'
-import { VectorQueries, type RawEmbeddingRow } from './queries/vector-queries'
-import { mapRetrievalResult } from './mappers'
-import { bufferToEmbedding } from '../storage/mappers'
-import { type RawChunkWithDocument, RetrievalQueries } from "./queries/retrieval-queries";
+import type {RetrievalResult, SearchQuery, SpyglassConfig} from '@spyglass/shared'
+import type { IRetriever } from '../../../interfaces/retriever.interface'
+import type { IEmbeddingProvider } from '../../../interfaces/embedding-provider.interface'
+import { DatabaseConnection } from '../../../storage/database'
+import { TYPES } from '../../../container/types'
+import { VectorQueries, type RawEmbeddingRow } from './vector-queries'
+import { mapRetrievalResult } from '../../shared/mappers'
+import { bufferToEmbedding } from '../../../storage/mappers'
+import { type RawChunkWithDocument, RetrievalQueries } from "../../shared/retrieval-queries";
 
 @injectable()
 export class VectorRetriever implements IRetriever {
 
     constructor(
+        @inject(TYPES.SpyglassConfig)
+        private readonly config: SpyglassConfig,
+
         @inject(TYPES.DatabaseConnection)
         private readonly connection: DatabaseConnection,
 
@@ -23,6 +26,7 @@ export class VectorRetriever implements IRetriever {
 
     async isReady(): Promise<boolean> {
         const db = this.connection.getDb()
+        await this.verifyDimensions();
         const result = db
             .prepare(VectorQueries.COUNT_EMBEDDED)
             .get() as { count: number }
@@ -109,5 +113,29 @@ export class VectorRetriever implements IRetriever {
         }
 
         return dotProduct / magnitude
+    }
+
+    private async verifyDimensions(): Promise<boolean> {
+        const db = this.connection.getDb()
+
+        const sample = db.prepare(VectorQueries.SELECT_DIMENSIONS).get() as { byte_length: number } | undefined
+
+        if (!sample) {
+            return true
+        }
+
+        const storedDimensions = sample.byte_length / 4 // Float32 = 4 bytes
+        const configuredDimensions = this.config.embedding.dimensions
+
+        if (storedDimensions !== configuredDimensions) {
+            throw new Error(
+                `Embedding dimension mismatch. ` +
+                `Stored: ${storedDimensions}, ` +
+                `Configured: ${configuredDimensions}. ` +
+                `Delete ~/.spyglass/spyglass.db and re-index.`
+            )
+        }
+
+        return true
     }
 }

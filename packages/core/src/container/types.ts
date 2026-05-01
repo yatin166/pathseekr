@@ -10,7 +10,7 @@ export const TYPES = {
 
     BM25Retriever: Symbol.for('BM25Retriever'),
     VectorRetriever: Symbol.for('VectorRetriever'),
-    EmbeddingPipeline: Symbol.for('EmbeddingPipeline'),
+    EmbeddingIndexBuilder: Symbol.for('EmbeddingIndexBuilder'),
     HybridRetriever: Symbol.for('HybridRetriever'),
 
     ParserRegistry: Symbol.for('ParserRegistry'),

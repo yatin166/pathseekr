@@ -1,5 +1,5 @@
 import type { RetrievalResult, RetrievalStrategy } from '@spyglass/shared'
-import { RawChunkWithDocument } from "./queries/retrieval-queries";
+import { RawChunkWithDocument } from "./retrieval-queries";
 
 
 export function mapRetrievalResult(

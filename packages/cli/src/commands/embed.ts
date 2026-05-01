@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import { createContainer, TYPES } from '@spyglass/core'
-import type { EmbeddingPipeline } from '@spyglass/core'
+import type { EmbeddingIndexBuilder } from '@spyglass/core'
 import { config } from '../config'
 
 export const embedCommand = new Command('embed')
@@ -10,11 +10,11 @@ export const embedCommand = new Command('embed')
         console.log(`\n${chalk.bold('Spyglass')} ${chalk.dim('— generating embeddings')}\n`)
 
         const container = createContainer(config)
-        const pipeline = container.get<EmbeddingPipeline>(TYPES.EmbeddingPipeline)
+        const embeddingIndexBuilder = container.get<EmbeddingIndexBuilder>(TYPES.EmbeddingIndexBuilder)
 
         let lastLine = ''
 
-        await pipeline.embedPending((progress) => {
+        await embeddingIndexBuilder.embedPending((progress) => {
             const bar = '█'.repeat(Math.floor(progress.percentComplete / 5))
             const empty = '░'.repeat(20 - Math.floor(progress.percentComplete / 5))
             const line =

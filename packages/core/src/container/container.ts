@@ -13,14 +13,14 @@ import { CodebaseIndexer } from '../indexer/codebase-indexer'
 import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
 import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import type { IIndexer } from '../interfaces/indexer.interface'
-import { ITokenizer } from "../retrieval/interfaces/tokenizer.interface";
-import { CodeTokenizer } from "../retrieval/tokenizer/code-tokenizer";
-import { BM25IndexBuilder } from "../retrieval/bm25-index-builder";
-import { BM25Retriever } from "../retrieval/bm25-retriever";
+import { ITokenizer } from "../retrieval/infrastructure/tokenizer/tokenizer.interface";
+import { CodeTokenizer } from "../retrieval/infrastructure/tokenizer/code-tokenizer";
+import { BM25IndexBuilder } from "../retrieval/strategies/bm25/bm25-index-builder";
+import { BM25Retriever } from "../retrieval/strategies/bm25/bm25-retriever";
 import {IEmbeddingProvider} from "../interfaces/embedding-provider.interface";
 import {OllamaEmbeddingProvider} from "../providers/embedding/ollama-embedding-provider";
-import {VectorRetriever} from "../retrieval/vector-retriever";
-import {EmbeddingPipeline} from "../retrieval/embedding-pipeline";
+import {VectorRetriever} from "../retrieval/strategies/vector/vector-retriever";
+import {EmbeddingIndexBuilder} from "../retrieval/strategies/vector/embedding-index-builder";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -89,8 +89,8 @@ export function createContainer(config: SpyglassConfig): Container {
         .to(VectorRetriever)
 
     container
-        .bind<EmbeddingPipeline>(TYPES.EmbeddingPipeline)
-        .to(EmbeddingPipeline)
+        .bind<EmbeddingIndexBuilder>(TYPES.EmbeddingIndexBuilder)
+        .to(EmbeddingIndexBuilder)
 
     return container
 }

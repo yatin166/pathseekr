@@ -1,12 +1,12 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
-import type { IEmbeddingProvider } from '../interfaces/embedding-provider.interface'
-import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
-import { DatabaseConnection } from '../storage/database'
-import { TYPES } from '../container/types'
-import { VectorQueries } from './queries/vector-queries'
-import { embeddingToBuffer } from '../storage/mappers'
-import {Chunk} from "@spyglass/shared";
+import type { IEmbeddingProvider } from '../../../interfaces/embedding-provider.interface'
+import type { IChunkRepository } from '../../../interfaces/chunk-repository.interface'
+import { DatabaseConnection } from '../../../storage/database'
+import { TYPES } from '../../../container/types'
+import { VectorQueries } from './vector-queries'
+import { embeddingToBuffer } from '../../../storage/mappers'
+import { Chunk } from "@spyglass/shared";
 
 export interface EmbeddingProgress {
     readonly total: number
@@ -15,7 +15,7 @@ export interface EmbeddingProgress {
 }
 
 @injectable()
-export class EmbeddingPipeline {
+export class EmbeddingIndexBuilder {
 
     constructor(
         @inject(TYPES.IEmbeddingProvider)
