@@ -25,7 +25,7 @@ export const searchCommand = new Command('search')
     .option(
         '-n, --limit <number>',
         'Number of results to return',
-        '10'
+        '5'
     )
     .option(
         '-s, --strategy <strategy>',
