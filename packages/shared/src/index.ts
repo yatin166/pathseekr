@@ -27,6 +27,7 @@ export type {
     IngestionJob,
     IndexingProgress,
     IndexStats,
+    IndexingPhase,
 } from './types/ingestion'
 
 export type {
