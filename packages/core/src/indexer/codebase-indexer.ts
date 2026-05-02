@@ -3,7 +3,7 @@ import { injectable, inject } from 'inversify'
 import fs from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
-import type { IngestionJob, IndexingProgress, JobStatus, SpyglassConfig } from '@spyglass/shared'
+import type { IngestionJob,  IndexingProgress, IndexingPhase, JobStatus, SpyglassConfig } from '@spyglass/shared'
 import type { IIndexer, IndexOptions } from '../interfaces/indexer.interface'
 import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
@@ -12,12 +12,11 @@ import { FileScanner } from './file-scanner'
 import { ChecksumService } from './checksum-service'
 import { ChunkBuilder } from './chunk-builder'
 import { ParserRegistry } from '../parsers/parser-registry'
-import {BM25IndexBuilder} from "../retrieval/strategies/bm25/bm25-index-builder";
-import {EmbeddingIndexBuilder} from "../retrieval/strategies/vector/embedding-index-builder";
+import { BM25IndexBuilder } from "../retrieval/strategies/bm25/bm25-index-builder";
+import { EmbeddingIndexBuilder } from "../retrieval/strategies/vector/embedding-index-builder";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
-
     constructor(
         @inject(TYPES.SpyglassConfig)
         private readonly config: SpyglassConfig,
@@ -51,11 +50,13 @@ export class CodebaseIndexer implements IIndexer {
         const jobId = randomUUID()
         const absolutePath = path.resolve(sourcePath)
         const startedAt = new Date()
+        const parseStart = Date.now()
 
         let job: IngestionJob = {
             id: jobId,
             sourcePath: absolutePath,
             status: 'scanning',
+            phase: 'parsing',
             totalFiles: 0,
             processedFiles: 0,
             totalChunks: 0,
@@ -65,7 +66,7 @@ export class CodebaseIndexer implements IIndexer {
         }
 
         try {
-            // Phase 1: scan the directory
+            // ── Phase 1: Scan ──────────────────────────────────────────
             this.emitProgress(job, onProgress)
 
             const scanResult = this.fileScanner.scan(absolutePath)
@@ -81,11 +82,12 @@ export class CodebaseIndexer implements IIndexer {
                     scanResult.skippedCount +
                     (scanResult.files.length - parsableFiles.length),
                 status: 'parsing',
+                phase: 'parsing',
             }
 
             this.emitProgress(job, onProgress)
 
-            // Phase 2: process files with concurrency limit
+            // ── Phase 1: Parse all files ───────────────────────────────
             const concurrency = this.config.indexing.concurrency
             let processedFiles = 0
             let totalChunks = 0
@@ -95,7 +97,7 @@ export class CodebaseIndexer implements IIndexer {
 
                 const results = await Promise.allSettled(
                     batch.map((file) =>
-                        this.processFile(
+                        this.parseAndStoreFile(
                             file.absolutePath,
                             jobId,
                             options
@@ -105,26 +107,89 @@ export class CodebaseIndexer implements IIndexer {
 
                 for (const result of results) {
                     processedFiles++
-
                     if (result.status === 'fulfilled') {
                         totalChunks += result.value.chunksCreated
                     }
-                    // Silently continue on individual file failures One bad file should not stop the whole index
                 }
 
                 job = {
                     ...job,
                     processedFiles,
                     totalChunks,
+                    status: 'parsing',
+                    phase: 'parsing',
                 }
 
                 this.emitProgress(job, onProgress)
             }
 
-            // Phase 3: mark complete
+            const parseMs = Date.now() - parseStart
+
+            // Phase 1 complete — emit BM25 ready signal
+            job = {
+                ...job,
+                status: 'parsing',
+                phase: 'parsing',
+                processedFiles,
+                totalChunks,
+                parseMs,
+            }
+
+            this.emitProgress(job, onProgress)
+
+            // ── Phase 2: Embed all pending chunks ──────────────────────
+            if (!options.skipEmbedding) {
+                const embedStart = Date.now()
+
+                job = {
+                    ...job,
+                    status: 'embedding',
+                    phase: 'embedding',
+                }
+
+                this.emitProgress(job, onProgress)
+
+                // Get total unembedded count for progress
+                const unembedded =
+                    await this.chunkRepository.findUnembedded()
+                const totalToEmbed = unembedded.length
+
+                await this.embeddingIndexBuilder.embedPending(
+                    (embedProgress) => {
+                        job = {
+                            ...job,
+                            status: 'embedding',
+                            phase: 'embedding',
+                        }
+
+                        // Emit embedding progress
+                        onProgress?.({
+                            jobId: job.id,
+                            status: 'embedding',
+                            phase: 'embedding',
+                            processedFiles: job.processedFiles,
+                            totalFiles: job.totalFiles,
+                            totalChunks: job.totalChunks,
+                            percentComplete: embedProgress.percentComplete,
+                            processedChunks: embedProgress.processed,
+                            totalChunksToEmbed: totalToEmbed,
+                        })
+                    }
+                )
+
+                const embedMs = Date.now() - embedStart
+
+                job = {
+                    ...job,
+                    embedMs,
+                }
+            }
+
+            // ── Complete ───────────────────────────────────────────────
             job = {
                 ...job,
                 status: 'completed',
+                phase: 'embedding',
                 completedAt: new Date(),
                 processedFiles,
                 totalChunks,
@@ -146,7 +211,7 @@ export class CodebaseIndexer implements IIndexer {
         }
     }
 
-    private async processFile(filePath: string, jobId: string, options: IndexOptions): Promise<{ chunksCreated: number }> {
+    private async parseAndStoreFile(filePath: string, jobId: string, options: IndexOptions): Promise<{ chunksCreated: number }> {
         const content = fs.readFileSync(filePath, 'utf-8')
 
         const checksumResult = await this.checksumService.check(filePath, content)
@@ -193,10 +258,6 @@ export class CodebaseIndexer implements IIndexer {
 
         await this.bm25IndexBuilder.buildForDocument(documentId)
 
-        if (!options.skipEmbedding) {
-            await this.embeddingIndexBuilder.embedForDocument(documentId)
-        }
-
         return { chunksCreated: chunks.length }
     }
 
@@ -212,6 +273,7 @@ export class CodebaseIndexer implements IIndexer {
         onProgress({
             jobId: job.id,
             status: job.status as JobStatus,
+            phase: job.phase as IndexingPhase,
             processedFiles: job.processedFiles,
             totalFiles: job.totalFiles,
             totalChunks: job.totalChunks,
