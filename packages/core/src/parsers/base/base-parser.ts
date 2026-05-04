@@ -16,6 +16,15 @@ export interface ExtractedNode {
     metadata: ChunkMetadata
 }
 
+export interface ClassSummaryParams {
+    readonly name: string
+    readonly methods: ExtractedNode[]
+    readonly fields: string[]
+    readonly extendsClause?: string
+    readonly implementsClause?: string
+    readonly accessModifier?: string
+}
+
 @injectable()
 export abstract class BaseParser implements IDocumentParser {
 
@@ -169,6 +178,62 @@ export abstract class BaseParser implements IDocumentParser {
             metadata: extracted.metadata,
             createdAt: new Date(),
         }
+    }
+
+    /*
+    * Builds a structural summary for a class chunk.
+    * Stores the class declaration, fields, and method signatures only.
+    * Full method implementations are stored in individual method chunks.
+    * This eliminates duplicate content and improves embedding quality.
+    */
+    protected buildClassSummary(params: ClassSummaryParams): string {
+        const lines: string[] = []
+
+        // Class declaration line
+        const declaration = this.buildDeclarationLine(params)
+        lines.push(`${declaration} {`)
+
+        // Class-level fields
+        if (params.fields.length > 0) {
+            lines.push('')
+            for (const field of params.fields) {
+                lines.push(`  ${field}`)
+            }
+        }
+
+        // Method signatures as comments
+        // Full implementations live in individual method chunks
+        if (params.methods.length > 0) {
+            lines.push('')
+            for (const method of params.methods) {
+                const sig = method.metadata.signature ?? method.name
+                lines.push(`  // ${sig}`)
+            }
+        }
+
+        lines.push('}')
+
+        return lines.join('\n')
+    }
+
+    private buildDeclarationLine(params: ClassSummaryParams): string {
+        const parts: string[] = []
+
+        if (params.accessModifier !== undefined) {
+            parts.push(params.accessModifier)
+        }
+
+        parts.push(`class ${params.name}`)
+
+        if (params.extendsClause !== undefined) {
+            parts.push(`extends ${params.extendsClause}`)
+        }
+
+        if (params.implementsClause !== undefined) {
+            parts.push(`implements ${params.implementsClause}`)
+        }
+
+        return parts.join(' ')
     }
 
     private getExtension(filePath: string): string {
