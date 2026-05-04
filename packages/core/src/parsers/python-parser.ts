@@ -176,6 +176,7 @@ export class PythonParser extends BaseParser {
     }
 
     private extractClass(node: Parser.SyntaxNode, content: string): ExtractedNode[] {
+        // Unwrap decorated definitions
         const classNode = node.type === PY_NODE_TYPES.DECORATED_DEFINITION
             ? this.getDecoratedInner(node) ?? node
             : node
@@ -185,7 +186,10 @@ export class PythonParser extends BaseParser {
             return []
         }
 
+        // Extract class docstring from the class node body
+        // Must be called on classNode not on the body directly
         const docstring = this.extractPythonDocstring(classNode, content)
+
         const results: ExtractedNode[] = []
         const methods: ExtractedNode[] = []
         const fields: string[] = []
@@ -198,14 +202,17 @@ export class PythonParser extends BaseParser {
                     continue
                 }
 
+                // Extract plain methods
                 if (child.type === PY_NODE_TYPES.FUNCTION_DEFINITION) {
                     const method = this.extractMethod(child, name, content)
                     if (method) {
                         methods.push(method)
                         results.push(method)
                     }
+                    continue
                 }
 
+                // Extract decorated methods (@property, @staticmethod etc)
                 if (child.type === PY_NODE_TYPES.DECORATED_DEFINITION) {
                     const inner = this.getDecoratedInner(child)
                     if (inner && inner.type === PY_NODE_TYPES.FUNCTION_DEFINITION) {
@@ -215,20 +222,30 @@ export class PythonParser extends BaseParser {
                             results.push(method)
                         }
                     }
+                    continue
                 }
 
-                // Python class-level assignments like self.x = ...
-                // captured at the class body level as expressions
-                if (child.type === 'expression_statement' && child.text.includes(':')) {
-                    const fieldText = child.text.split('\n')[0]?.trim()
-                    if (fieldText && !fieldText.startsWith('#')) {
-                        fields.push(fieldText)
+                // Capture class-level annotated assignments
+                // e.g. api_key: str or count: int = 0
+                if (child.type === 'expression_statement') {
+                    const text = this.getNodeText(child, content)
+                        .split('\n')[0]
+                        ?.trim()
+                    // Skip the docstring expression — already captured above
+                    if (
+                        text &&
+                        !text.startsWith('"""') &&
+                        !text.startsWith("'''") &&
+                        !text.startsWith('#')
+                    ) {
+                        fields.push(text)
                     }
+                    continue
                 }
             }
         }
 
-        // Extract base class
+        // Extract base classes from argument_list node
         const extendsClause = this.extractBaseClasses(classNode, content)
 
         const declaration: ClassDeclaration = {
@@ -237,14 +254,13 @@ export class PythonParser extends BaseParser {
             fields,
             bodyStyle: 'colon',
             commentPrefix: '#',
-            ...(extendsClause !== undefined && { extendsClause }),
-            ...(docstring !== undefined && { docstring }),
+            docstring,
+            extendsClause,
         }
-        const summary = this.buildClassSummary(declaration)
 
         results.unshift({
             name,
-            content: summary,
+            content: this.buildClassSummary(declaration),
             chunkType: 'class',
             startLine: this.getStartLine(node),
             endLine: this.getEndLine(node),
@@ -258,12 +274,17 @@ export class PythonParser extends BaseParser {
     }
 
     private extractBaseClasses(node: Parser.SyntaxNode, content: string): string | undefined {
-        const args = this.getChildByField(node, 'bases')
-        if (!args) {
-            return undefined
+        for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i)
+            if (child?.type === 'argument_list') {
+                const text = this.getNodeText(child, content)
+                    .replace(/^\(/, '')
+                    .replace(/\)$/, '')
+                    .trim()
+                return text || undefined
+            }
         }
-        const text = this.getNodeText(args, content).trim()
-        return text || undefined
+        return undefined
     }
 
     private extractMethod(
@@ -313,7 +334,6 @@ export class PythonParser extends BaseParser {
             return undefined
         }
 
-        // The first child of the body might be a docstring
         const firstStatement = body.child(0)
         if (!firstStatement) {
             return undefined
