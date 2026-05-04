@@ -126,9 +126,54 @@ export class JavaScriptParser extends BaseParser {
         const docstring = this.extractDocstring(originalNode, lines)
         const results: ExtractedNode[] = []
 
-        results.push({
+        const methods: ExtractedNode[] = []
+        const fields: string[] = []
+
+        const body = this.getChildByField(node, 'body')
+        if (body) {
+            for (let i = 0; i < body.childCount; i++) {
+                const child = body.child(i)
+                if (!child) continue
+
+                if (child.type === JS_NODE_TYPES.METHOD_DEFINITION) {
+                    const method = this.extractMethod(
+                        child,
+                        name,
+                        content,
+                        lines
+                    )
+                    if (method) {
+                        methods.push(method)
+                        results.push(method)
+                    }
+                }
+
+                // JavaScript class fields
+                if (child.type === 'field_definition') {
+                    const fieldText = this.getNodeText(child, content)
+                        .split('\n')[0]
+                        ?.trim()
+                    if (fieldText) fields.push(fieldText)
+                }
+            }
+        }
+
+        // Extract extends clause if present
+        const extendsNode = this.getChildByField(node, 'extends')
+        const extendsClause = extendsNode
+            ? this.getNodeText(extendsNode, content).trim()
+            : undefined
+
+        const summary = this.buildClassSummary({
             name,
-            content: this.getNodeText(originalNode, content),
+            methods,
+            fields,
+            ...(extendsClause !== undefined && { extendsClause }),
+        })
+
+        results.unshift({
+            name,
+            content: summary,
             chunkType: 'class',
             startLine: this.getStartLine(originalNode),
             endLine: this.getEndLine(originalNode),
@@ -137,25 +182,6 @@ export class JavaScriptParser extends BaseParser {
                 ...(docstring !== undefined && { docstring }),
             },
         })
-
-        const body = this.getChildByField(node, 'body')
-        if (body) {
-            for (let i = 0; i < body.childCount; i++) {
-                const child = body.child(i)
-                if (
-                    child &&
-                    child.type === JS_NODE_TYPES.METHOD_DEFINITION
-                ) {
-                    const method = this.extractMethod(
-                        child,
-                        name,
-                        content,
-                        lines
-                    )
-                    if (method) results.push(method)
-                }
-            }
-        }
 
         return results
     }
