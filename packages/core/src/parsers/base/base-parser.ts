@@ -197,7 +197,7 @@ export abstract class BaseParser implements IDocumentParser {
         lines.push(declarationLine)
 
         // Docstring — Python puts it first inside the class body
-        if (declaration.docstring && declaration.bodyStyle === 'colon') {
+        if (declaration.docstring !== undefined && declaration.bodyStyle === 'colon') {
             lines.push(`    """${declaration.docstring}"""`)
         }
 
