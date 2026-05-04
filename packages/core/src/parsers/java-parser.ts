@@ -3,7 +3,12 @@ import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const JavaLanguage = require('tree-sitter-java')
 import type { Language } from '@spyglass/shared'
-import {BaseParser, ClassSummaryParams, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
+import {
+    BaseParser,
+    ClassDeclaration,
+    type ExtractedNode,
+    TreeSitterLanguage
+} from './base/base-parser'
 
 
 const JAVA_NODE_TYPES = {
@@ -73,7 +78,7 @@ export class JavaParser extends BaseParser {
         return extracted
     }
 
-    protected buildClassSummary(params: ClassSummaryParams): string {
+    protected buildClassSummary(params: ClassDeclaration): string {
         const lines: string[] = []
 
         // Java class declaration
@@ -136,28 +141,20 @@ export class JavaParser extends BaseParser {
         }
 
         // Find extends and implements
-        const extendsNode = this.findChildByType(node, 'superclass')
-        const extendsClause = extendsNode
-            ? this.getNodeText(extendsNode, content)
-                .replace(/^extends\s+/, '')
-                .trim()
-            : undefined
+        const { extendsClause, implementsClause } = this.extractJavaHeritage(node, content)
 
-        const implementsNode = this.findChildByType(node, 'super_interfaces')
-        const implementsClause = implementsNode
-            ? this.getNodeText(implementsNode, content)
-                .replace(/^implements\s+/, '')
-                .trim()
-            : undefined
-
-        const summary = this.buildClassSummary({
+        const declaration: ClassDeclaration = {
             name,
             methods,
-            fields: [],  // Java fields are rarely searched for directly
+            fields: [],
+            bodyStyle: 'brace',
+            commentPrefix: '//',
             accessModifier: 'public',
             ...(extendsClause !== undefined && { extendsClause }),
             ...(implementsClause !== undefined && { implementsClause }),
-        })
+            ...(javadoc !== undefined && { docstring: javadoc }),
+        }
+        const summary = this.buildClassSummary(declaration)
 
         results.unshift({
             name,
@@ -172,6 +169,38 @@ export class JavaParser extends BaseParser {
         })
 
         return results
+    }
+
+    private extractJavaHeritage(node: Parser.SyntaxNode, content: string): { extendsClause?: string; implementsClause?: string } {
+        let extendsClause: string | undefined
+        let implementsClause: string | undefined
+
+        const superclass = this.findChildByType(node, 'superclass')
+        if (superclass) {
+            const typeNode = superclass.child(1)
+            if (typeNode) {
+                extendsClause = this.getNodeText(typeNode, content).trim()
+            }
+        }
+
+        const superInterfaces = this.findChildByType(
+            node,
+            'super_interfaces'
+        )
+        if (superInterfaces) {
+            const types: string[] = []
+            for (let i = 1; i < superInterfaces.childCount; i++) {
+                const child = superInterfaces.child(i)
+                if (child && child.type !== ',') {
+                    types.push(this.getNodeText(child, content).trim())
+                }
+            }
+            if (types.length > 0) {
+                implementsClause = types.join(', ')
+            }
+        }
+
+        return { extendsClause, implementsClause }
     }
 
     private extractInterface(node: Parser.SyntaxNode, content: string, lines: string[]): ExtractedNode[] {

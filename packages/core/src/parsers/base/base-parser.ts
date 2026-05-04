@@ -16,13 +16,16 @@ export interface ExtractedNode {
     metadata: ChunkMetadata
 }
 
-export interface ClassSummaryParams {
+export interface ClassDeclaration {
     readonly name: string
-    readonly methods: ExtractedNode[]
-    readonly fields: string[]
     readonly extendsClause?: string
     readonly implementsClause?: string
     readonly accessModifier?: string
+    readonly fields: readonly string[]
+    readonly methods: readonly ExtractedNode[]
+    readonly docstring?: string
+    readonly bodyStyle: 'brace' | 'colon'
+    readonly commentPrefix: '//' | '#'
 }
 
 @injectable()
@@ -186,54 +189,101 @@ export abstract class BaseParser implements IDocumentParser {
     * Full method implementations are stored in individual method chunks.
     * This eliminates duplicate content and improves embedding quality.
     */
-    protected buildClassSummary(params: ClassSummaryParams): string {
+    protected buildClassSummary(declaration: ClassDeclaration): string {
         const lines: string[] = []
 
-        // Class declaration line
-        const declaration = this.buildDeclarationLine(params)
-        lines.push(`${declaration} {`)
+        // Declaration line
+        const declarationLine = this.buildDeclarationLine(declaration)
+        lines.push(declarationLine)
 
-        // Class-level fields
-        if (params.fields.length > 0) {
+        // Docstring — Python puts it first inside the class body
+        if (declaration.docstring && declaration.bodyStyle === 'colon') {
+            lines.push(`    """${declaration.docstring}"""`)
+        }
+
+        // Fields
+        if (declaration.fields.length > 0) {
             lines.push('')
-            for (const field of params.fields) {
-                lines.push(`  ${field}`)
+            for (const field of declaration.fields) {
+                const indent =
+                    declaration.bodyStyle === 'brace' ? '  ' : '    '
+                lines.push(`${indent}${field}`)
             }
         }
 
-        // Method signatures as comments
-        // Full implementations live in individual method chunks
-        if (params.methods.length > 0) {
+        // Method signatures
+        if (declaration.methods.length > 0) {
             lines.push('')
-            for (const method of params.methods) {
-                const sig = method.metadata.signature ?? method.name
-                lines.push(`  // ${sig}`)
+            for (const method of declaration.methods) {
+                const sig = this.compressSignature(method.metadata.signature ?? method.name)
+                const indent = declaration.bodyStyle === 'brace' ? '  ' : '    '
+                lines.push(`${indent}${declaration.commentPrefix} ${sig}`)
             }
         }
 
-        lines.push('}')
+        // Closing brace for brace-style languages
+        if (declaration.bodyStyle === 'brace') {
+            lines.push('}')
+        }
 
         return lines.join('\n')
     }
 
-    private buildDeclarationLine(params: ClassSummaryParams): string {
+    private buildDeclarationLine(declaration: ClassDeclaration): string {
         const parts: string[] = []
 
-        if (params.accessModifier !== undefined) {
-            parts.push(params.accessModifier)
+        if (declaration.accessModifier !== undefined) {
+            parts.push(declaration.accessModifier)
         }
 
-        parts.push(`class ${params.name}`)
+        parts.push(`class ${declaration.name}`)
 
-        if (params.extendsClause !== undefined) {
-            parts.push(`extends ${params.extendsClause}`)
+        if (declaration.extendsClause !== undefined) {
+            if (declaration.bodyStyle === 'colon') {
+                // Python: class Foo(BaseClass):
+                // handled below in suffix
+            } else {
+                parts.push(`extends ${declaration.extendsClause}`)
+            }
         }
 
-        if (params.implementsClause !== undefined) {
-            parts.push(`implements ${params.implementsClause}`)
+        if (declaration.implementsClause !== undefined) {
+            parts.push(`implements ${declaration.implementsClause}`)
         }
 
-        return parts.join(' ')
+        const base = parts.join(' ')
+
+        if (declaration.bodyStyle === 'colon') {
+            // Python: class Foo(BaseClass): or class Foo:
+            const bases = declaration.extendsClause
+                ? `(${declaration.extendsClause})`
+                : ''
+            return `class ${declaration.name}${bases}:`
+        }
+
+        return `${base} {`
+    }
+
+    /*
+    * Compresses a multi-line signature to a single readable line
+    * extractFunction(
+    *   node: Parser.SyntaxNode,
+    *   content: string
+    * ): string
+    * becomes:
+    * extractFunction(node: Parser.SyntaxNode, content: string): string
+    */
+    private compressSignature(signature: string): string {
+        return signature
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\(\s+/g, '(')
+            .replace(/\s+\)/g, ')')
+            .replace(/,\s+/g, ', ')
+            .replace(/\s{2,}/g, ' ')
+            .trim()
     }
 
     private getExtension(filePath: string): string {

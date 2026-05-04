@@ -3,7 +3,12 @@ import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const PythonLanguage = require('tree-sitter-python')
 import type { Language } from '@spyglass/shared'
-import {BaseParser, ClassSummaryParams, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
+import {
+    BaseParser,
+    ClassDeclaration,
+    type ExtractedNode,
+    TreeSitterLanguage
+} from './base/base-parser'
 
 
 const PY_NODE_TYPES = {
@@ -97,7 +102,7 @@ export class PythonParser extends BaseParser {
         return extracted
     }
 
-    protected buildClassSummary(params: ClassSummaryParams): string {
+    protected buildClassSummary(params: ClassDeclaration): string {
         const lines: string[] = []
 
         // Python class declaration
@@ -224,17 +229,18 @@ export class PythonParser extends BaseParser {
         }
 
         // Extract base class
-        const args = this.getChildByField(classNode, 'bases')
-        const extendsClause = args
-            ? this.getNodeText(args, content).trim()
-            : undefined
+        const extendsClause = this.extractBaseClasses(classNode, content)
 
-        const summary = this.buildClassSummary({
+        const declaration: ClassDeclaration = {
             name,
             methods,
             fields,
+            bodyStyle: 'colon',
+            commentPrefix: '#',
             ...(extendsClause !== undefined && { extendsClause }),
-        })
+            ...(docstring !== undefined && { docstring }),
+        }
+        const summary = this.buildClassSummary(declaration)
 
         results.unshift({
             name,
@@ -249,6 +255,15 @@ export class PythonParser extends BaseParser {
         })
 
         return results
+    }
+
+    private extractBaseClasses(node: Parser.SyntaxNode, content: string): string | undefined {
+        const args = this.getChildByField(node, 'bases')
+        if (!args) {
+            return undefined
+        }
+        const text = this.getNodeText(args, content).trim()
+        return text || undefined
     }
 
     private extractMethod(

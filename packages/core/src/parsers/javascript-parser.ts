@@ -3,7 +3,7 @@ import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const JSLanguage = require('tree-sitter-javascript')
 import type { Language } from '@spyglass/shared'
-import {BaseParser, type ExtractedNode, TreeSitterLanguage,} from './base/base-parser'
+import {BaseParser, ClassDeclaration, type ExtractedNode, TreeSitterLanguage,} from './base/base-parser'
 
 const JS_NODE_TYPES = {
     // Top level
@@ -164,12 +164,16 @@ export class JavaScriptParser extends BaseParser {
             ? this.getNodeText(extendsNode, content).trim()
             : undefined
 
-        const summary = this.buildClassSummary({
+        const declaration: ClassDeclaration = {
             name,
             methods,
             fields,
+            bodyStyle: 'brace',
+            commentPrefix: '//',
             ...(extendsClause !== undefined && { extendsClause }),
-        })
+            ...(docstring !== undefined && { docstring }),
+        }
+        const summary = this.buildClassSummary(declaration)
 
         results.unshift({
             name,
