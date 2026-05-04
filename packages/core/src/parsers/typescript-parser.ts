@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { injectable } from 'inversify'
 const TSLanguage = require('tree-sitter-typescript').typescript
 import type { Language } from '@spyglass/shared'
-import { BaseParser, type ExtractedNode, TreeSitterLanguage } from './base/base-parser'
+import {BaseParser, ClassSummaryParams, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
 import Parser from 'tree-sitter'
 
 
@@ -132,9 +132,72 @@ export class TypeScriptParser extends BaseParser {
         const docstring = this.extractDocstring(originalNode, lines)
         const results: ExtractedNode[] = []
 
-        results.push({
+        // Extract methods first so we can include them in the summary
+        const methods: ExtractedNode[] = []
+        const fields: string[] = []
+
+        const body = this.getChildByField(node, 'body')
+        if (body) {
+            for (let i = 0; i < body.childCount; i++) {
+                const child = body.child(i)
+                if (!child) continue
+
+                if (child.type === TS_NODE_TYPES.METHOD_DEFINITION) {
+                    const method = this.extractMethod(
+                        child,
+                        name,
+                        content,
+                        lines
+                    )
+                    if (method) {
+                        methods.push(method)
+                        results.push(method)
+                    }
+                }
+
+                // Extract field declarations for the summary
+                if (
+                    child.type === TS_NODE_TYPES.PUBLIC_FIELD ||
+                    child.type === 'property_signature'
+                ) {
+                    const fieldText = this.getNodeText(child, content)
+                        .split('\n')[0] // first line only — no implementation
+                        ?.trim()
+                    if (fieldText) fields.push(fieldText)
+                }
+            }
+        }
+
+        // Extract extends clause
+        const heritageClause = node.childForFieldName('extends')
+        const extendsClause = heritageClause
+            ? this.getNodeText(heritageClause, content).trim()
+            : undefined
+
+        // Extract implements clause
+        const implementsNode = this.findChildByType(
+            node,
+            'implements_clause'
+        )
+        const implementsClause = implementsNode
+            ? this.getNodeText(implementsNode, content)
+                .replace(/^implements\s+/, '')
+                .trim()
+            : undefined
+
+        // Build structural summary — not full source
+        const classSummary: ClassSummaryParams = {
             name,
-            content: this.getNodeText(originalNode, content),
+            methods,
+            fields,
+            ...(extendsClause !== undefined && { extendsClause }),
+            ...(implementsClause !== undefined && { implementsClause }),
+        }
+        const summary = this.buildClassSummary(classSummary)
+
+        results.unshift({
+            name,
+            content: summary,
             chunkType: 'class',
             startLine: this.getStartLine(originalNode),
             endLine: this.getEndLine(originalNode),
@@ -144,26 +207,17 @@ export class TypeScriptParser extends BaseParser {
             },
         })
 
-        const body = this.getChildByField(node, 'body')
-        if (body) {
-            for (let i = 0; i < body.childCount; i++) {
-                const child = body.child(i)
-                if (
-                    child &&
-                    child.type === TS_NODE_TYPES.METHOD_DEFINITION
-                ) {
-                    const method = this.extractMethod(
-                        child,
-                        name,
-                        content,
-                        lines
-                    )
-                    if (method) results.push(method)
-                }
+        return results
+    }
+
+    private findChildByType(node: Parser.SyntaxNode, type: string): Parser.SyntaxNode | null {
+        for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i)
+            if (child?.type === type) {
+                return child
             }
         }
-
-        return results
+        return null
     }
 
     private extractMethod(
