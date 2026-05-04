@@ -3,7 +3,7 @@ import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const JavaLanguage = require('tree-sitter-java')
 import type { Language } from '@spyglass/shared'
-import {BaseParser, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
+import {BaseParser, ClassSummaryParams, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
 
 
 const JAVA_NODE_TYPES = {
@@ -73,6 +73,35 @@ export class JavaParser extends BaseParser {
         return extracted
     }
 
+    protected buildClassSummary(params: ClassSummaryParams): string {
+        const lines: string[] = []
+
+        // Java class declaration
+        const declaration = [
+            params.accessModifier ?? 'public',
+            'class',
+            params.name,
+            params.extendsClause ? `extends ${params.extendsClause}` : null,
+            params.implementsClause ? `implements ${params.implementsClause}` : null,
+        ].filter(Boolean).join(' ')
+
+        lines.push(`${declaration} {`)
+
+        // Method signatures as comments
+        if (params.methods.length > 0) {
+            lines.push('')
+            for (const method of params.methods) {
+                const sig = method.metadata.signature ?? method.name
+                lines.push(`    // ${sig}`)
+            }
+            lines.push('')
+        }
+
+        lines.push('}')
+
+        return lines.join('\n')
+    }
+
     private extractClass(node: Parser.SyntaxNode, content: string, lines: string[]): ExtractedNode[] {
         const name = this.findIdentifier(node, content)
         if (!name) {
@@ -86,10 +115,53 @@ export class JavaParser extends BaseParser {
 
         const javadoc = this.extractJavadoc(node, lines)
         const results: ExtractedNode[] = []
+        const methods: ExtractedNode[] = []
 
-        results.push({
+        const body = this.findChildByType(node, JAVA_NODE_TYPES.CLASS_BODY)
+        if (body) {
+            for (let i = 0; i < body.childCount; i++) {
+                const child = body.child(i)
+                if (!child) {
+                    continue
+                }
+
+                if (child.type === JAVA_NODE_TYPES.METHOD_DECLARATION) {
+                    const method = this.extractMethod(child, name, content, lines)
+                    if (method) {
+                        methods.push(method)
+                        results.push(method)
+                    }
+                }
+            }
+        }
+
+        // Find extends and implements
+        const extendsNode = this.findChildByType(node, 'superclass')
+        const extendsClause = extendsNode
+            ? this.getNodeText(extendsNode, content)
+                .replace(/^extends\s+/, '')
+                .trim()
+            : undefined
+
+        const implementsNode = this.findChildByType(node, 'super_interfaces')
+        const implementsClause = implementsNode
+            ? this.getNodeText(implementsNode, content)
+                .replace(/^implements\s+/, '')
+                .trim()
+            : undefined
+
+        const summary = this.buildClassSummary({
             name,
-            content: this.getNodeText(node, content),
+            methods,
+            fields: [],  // Java fields are rarely searched for directly
+            accessModifier: 'public',
+            ...(extendsClause !== undefined && { extendsClause }),
+            ...(implementsClause !== undefined && { implementsClause }),
+        })
+
+        results.unshift({
+            name,
+            content: summary,
             chunkType: 'class',
             startLine: this.getStartLine(node),
             endLine: this.getEndLine(node),
@@ -98,29 +170,6 @@ export class JavaParser extends BaseParser {
                 ...(javadoc !== undefined && { docstring: javadoc }),
             },
         })
-
-        const body = this.findChildByType(
-            node,
-            JAVA_NODE_TYPES.CLASS_BODY
-        )
-        if (!body) {
-            return results
-        }
-
-        for (let i = 0; i < body.childCount; i++) {
-            const child = body.child(i)
-            if (!child) continue
-
-            if (child.type === JAVA_NODE_TYPES.METHOD_DECLARATION) {
-                const method = this.extractMethod(
-                    child,
-                    name,
-                    content,
-                    lines
-                )
-                if (method) results.push(method)
-            }
-        }
 
         return results
     }
