@@ -16,6 +16,18 @@ export interface ExtractedNode {
     metadata: ChunkMetadata
 }
 
+export interface ClassDeclaration {
+    readonly name: string
+    readonly extendsClause?: string
+    readonly implementsClause?: string
+    readonly accessModifier?: string
+    readonly fields: readonly string[]
+    readonly methods: readonly ExtractedNode[]
+    readonly docstring?: string
+    readonly bodyStyle: 'brace' | 'colon'
+    readonly commentPrefix: '//' | '#'
+}
+
 @injectable()
 export abstract class BaseParser implements IDocumentParser {
 
@@ -169,6 +181,109 @@ export abstract class BaseParser implements IDocumentParser {
             metadata: extracted.metadata,
             createdAt: new Date(),
         }
+    }
+
+    /*
+    * Builds a structural summary for a class chunk.
+    * Stores the class declaration, fields, and method signatures only.
+    * Full method implementations are stored in individual method chunks.
+    * This eliminates duplicate content and improves embedding quality.
+    */
+    protected buildClassSummary(declaration: ClassDeclaration): string {
+        const lines: string[] = []
+
+        // Declaration line
+        const declarationLine = this.buildDeclarationLine(declaration)
+        lines.push(declarationLine)
+
+        // Docstring — Python puts it first inside the class body
+        if (declaration.docstring && declaration.bodyStyle === 'colon') {
+            lines.push(`    """${declaration.docstring}"""`)
+        }
+
+        // Fields
+        if (declaration.fields.length > 0) {
+            lines.push('')
+            for (const field of declaration.fields) {
+                const indent =
+                    declaration.bodyStyle === 'brace' ? '  ' : '    '
+                lines.push(`${indent}${field}`)
+            }
+        }
+
+        // Method signatures
+        if (declaration.methods.length > 0) {
+            lines.push('')
+            for (const method of declaration.methods) {
+                const sig = this.compressSignature(method.metadata.signature ?? method.name)
+                const indent = declaration.bodyStyle === 'brace' ? '  ' : '    '
+                lines.push(`${indent}${declaration.commentPrefix} ${sig}`)
+            }
+        }
+
+        // Closing brace for brace-style languages
+        if (declaration.bodyStyle === 'brace') {
+            lines.push('}')
+        }
+
+        return lines.join('\n')
+    }
+
+    private buildDeclarationLine(declaration: ClassDeclaration): string {
+        const parts: string[] = []
+
+        if (declaration.accessModifier !== undefined) {
+            parts.push(declaration.accessModifier)
+        }
+
+        parts.push(`class ${declaration.name}`)
+
+        if (declaration.extendsClause !== undefined) {
+            if (declaration.bodyStyle === 'colon') {
+                // Python: class Foo(BaseClass):
+                // handled below in suffix
+            } else {
+                parts.push(`extends ${declaration.extendsClause}`)
+            }
+        }
+
+        if (declaration.implementsClause !== undefined) {
+            parts.push(`implements ${declaration.implementsClause}`)
+        }
+
+        const base = parts.join(' ')
+
+        if (declaration.bodyStyle === 'colon') {
+            // Python: class Foo(BaseClass): or class Foo:
+            const bases = declaration.extendsClause
+                ? `(${declaration.extendsClause})`
+                : ''
+            return `class ${declaration.name}${bases}:`
+        }
+
+        return `${base} {`
+    }
+
+    /*
+    * Compresses a multi-line signature to a single readable line
+    * extractFunction(
+    *   node: Parser.SyntaxNode,
+    *   content: string
+    * ): string
+    * becomes:
+    * extractFunction(node: Parser.SyntaxNode, content: string): string
+    */
+    private compressSignature(signature: string): string {
+        return signature
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\(\s+/g, '(')
+            .replace(/\s+\)/g, ')')
+            .replace(/,\s+/g, ', ')
+            .replace(/\s{2,}/g, ' ')
+            .trim()
     }
 
     private getExtension(filePath: string): string {

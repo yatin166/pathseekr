@@ -2,7 +2,12 @@ import 'reflect-metadata'
 import { injectable } from 'inversify'
 const TSLanguage = require('tree-sitter-typescript').typescript
 import type { Language } from '@spyglass/shared'
-import { BaseParser, type ExtractedNode, TreeSitterLanguage } from './base/base-parser'
+import {
+    BaseParser,
+    ClassDeclaration,
+    type ExtractedNode,
+    TreeSitterLanguage
+} from './base/base-parser'
 import Parser from 'tree-sitter'
 
 
@@ -131,10 +136,57 @@ export class TypeScriptParser extends BaseParser {
         const isExported = this.isExported(originalNode)
         const docstring = this.extractDocstring(originalNode, lines)
         const results: ExtractedNode[] = []
+        const methods: ExtractedNode[] = []
+        const fields: string[] = []
 
-        results.push({
+        // Extract body members
+        const body = this.getChildByField(node, 'body')
+        if (body) {
+            for (let i = 0; i < body.childCount; i++) {
+                const child = body.child(i)
+                if (!child) continue
+
+                if (child.type === TS_NODE_TYPES.METHOD_DEFINITION) {
+                    const method = this.extractMethod(
+                        child,
+                        name,
+                        content,
+                        lines
+                    )
+                    if (method) {
+                        methods.push(method)
+                        results.push(method)
+                    }
+                }
+
+                if (child.type === TS_NODE_TYPES.PUBLIC_FIELD || child.type === 'property_signature') {
+                    const fieldText = this.getNodeText(child, content).split('\n')[0]?.trim()
+                    if (fieldText) {
+                        fields.push(fieldText)
+                    }
+                }
+            }
+        }
+
+        // Extract heritage clauses
+        const { extendsClause, implementsClause } = this.extractHeritageClause(node, content)
+
+        // Build structured declaration
+        const declaration: ClassDeclaration = {
             name,
-            content: this.getNodeText(originalNode, content),
+            methods,
+            fields,
+            bodyStyle: 'brace',
+            commentPrefix: '//',
+            ...(extendsClause !== undefined && { extendsClause }),
+            ...(implementsClause !== undefined && { implementsClause }),
+            ...(docstring !== undefined && { docstring }),
+        }
+
+        // Class chunk uses structural summary — not full source
+        results.unshift({
+            name,
+            content: this.buildClassSummary(declaration),
             chunkType: 'class',
             startLine: this.getStartLine(originalNode),
             endLine: this.getEndLine(originalNode),
@@ -144,26 +196,57 @@ export class TypeScriptParser extends BaseParser {
             },
         })
 
-        const body = this.getChildByField(node, 'body')
-        if (body) {
-            for (let i = 0; i < body.childCount; i++) {
-                const child = body.child(i)
-                if (
-                    child &&
-                    child.type === TS_NODE_TYPES.METHOD_DEFINITION
-                ) {
-                    const method = this.extractMethod(
-                        child,
-                        name,
-                        content,
-                        lines
-                    )
-                    if (method) results.push(method)
+        return results
+    }
+
+    private extractHeritageClause(node: Parser.SyntaxNode, content: string): { extendsClause?: string; implementsClause?: string } {
+        let extendsClause: string | undefined
+        let implementsClause: string | undefined
+
+        for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i)
+            if (!child) {
+                continue
+            }
+
+            if (child.type === 'class_heritage') {
+                for (let j = 0; j < child.childCount; j++) {
+                    const heritage = child.child(j)
+                    if (!heritage) {
+                        continue
+                    }
+
+                    if (heritage.type === 'extends_clause') {
+                        // Skip 'extends' keyword, get the type
+                        const typeNode = heritage.child(1)
+                        if (typeNode) {
+                            extendsClause = this.getNodeText(
+                                typeNode,
+                                content
+                            ).trim()
+                        }
+                    }
+
+                    if (heritage.type === 'implements_clause') {
+                        // Collect all types after 'implements' keyword
+                        const types: string[] = []
+                        for (let k = 1; k < heritage.childCount; k++) {
+                            const typeChild = heritage.child(k)
+                            if (typeChild && typeChild.type !== ',') {
+                                types.push(
+                                    this.getNodeText(typeChild, content).trim()
+                                )
+                            }
+                        }
+                        if (types.length > 0) {
+                            implementsClause = types.join(', ')
+                        }
+                    }
                 }
             }
         }
 
-        return results
+        return { extendsClause, implementsClause }
     }
 
     private extractMethod(

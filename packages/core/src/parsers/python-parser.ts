@@ -3,7 +3,12 @@ import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const PythonLanguage = require('tree-sitter-python')
 import type { Language } from '@spyglass/shared'
-import {BaseParser, type ExtractedNode, TreeSitterLanguage} from './base/base-parser'
+import {
+    BaseParser,
+    ClassDeclaration,
+    type ExtractedNode,
+    TreeSitterLanguage
+} from './base/base-parser'
 
 
 const PY_NODE_TYPES = {
@@ -97,6 +102,41 @@ export class PythonParser extends BaseParser {
         return extracted
     }
 
+    protected buildClassSummary(params: ClassDeclaration): string {
+        const lines: string[] = []
+
+        // Python class declaration
+        const base = params.extendsClause
+            ? `class ${params.name}(${params.extendsClause}):`
+            : `class ${params.name}:`
+
+        lines.push(base)
+
+        // Class docstring if available
+        if (params.methods[0]?.metadata.docstring) {
+            lines.push(`    """${params.methods[0].metadata.docstring}"""`)
+            lines.push('')
+        }
+
+        // Field declarations
+        if (params.fields.length > 0) {
+            for (const field of params.fields) {
+                lines.push(`    ${field}`)
+            }
+            lines.push('')
+        }
+
+        // Method signatures as comments
+        if (params.methods.length > 0) {
+            for (const method of params.methods) {
+                const sig = method.metadata.signature ?? method.name
+                lines.push(`    # ${sig}`)
+            }
+        }
+
+        return lines.join('\n')
+    }
+
     private extractFunction(node: Parser.SyntaxNode, content: string): ExtractedNode[] {
         const funcNode =
             node.type === PY_NODE_TYPES.DECORATED_DEFINITION
@@ -136,10 +176,9 @@ export class PythonParser extends BaseParser {
     }
 
     private extractClass(node: Parser.SyntaxNode, content: string): ExtractedNode[] {
-        const classNode =
-            node.type === PY_NODE_TYPES.DECORATED_DEFINITION
-                ? this.getDecoratedInner(node) ?? node
-                : node
+        const classNode = node.type === PY_NODE_TYPES.DECORATED_DEFINITION
+            ? this.getDecoratedInner(node) ?? node
+            : node
 
         const name = this.getFieldText(classNode, 'name', content)
         if (!name) {
@@ -148,10 +187,64 @@ export class PythonParser extends BaseParser {
 
         const docstring = this.extractPythonDocstring(classNode, content)
         const results: ExtractedNode[] = []
+        const methods: ExtractedNode[] = []
+        const fields: string[] = []
 
-        results.push({
+        const body = this.getChildByField(classNode, 'body')
+        if (body) {
+            for (let i = 0; i < body.childCount; i++) {
+                const child = body.child(i)
+                if (!child) {
+                    continue
+                }
+
+                if (child.type === PY_NODE_TYPES.FUNCTION_DEFINITION) {
+                    const method = this.extractMethod(child, name, content)
+                    if (method) {
+                        methods.push(method)
+                        results.push(method)
+                    }
+                }
+
+                if (child.type === PY_NODE_TYPES.DECORATED_DEFINITION) {
+                    const inner = this.getDecoratedInner(child)
+                    if (inner && inner.type === PY_NODE_TYPES.FUNCTION_DEFINITION) {
+                        const method = this.extractMethod(child, name, content, inner)
+                        if (method) {
+                            methods.push(method)
+                            results.push(method)
+                        }
+                    }
+                }
+
+                // Python class-level assignments like self.x = ...
+                // captured at the class body level as expressions
+                if (child.type === 'expression_statement' && child.text.includes(':')) {
+                    const fieldText = child.text.split('\n')[0]?.trim()
+                    if (fieldText && !fieldText.startsWith('#')) {
+                        fields.push(fieldText)
+                    }
+                }
+            }
+        }
+
+        // Extract base class
+        const extendsClause = this.extractBaseClasses(classNode, content)
+
+        const declaration: ClassDeclaration = {
             name,
-            content: this.getNodeText(node, content),
+            methods,
+            fields,
+            bodyStyle: 'colon',
+            commentPrefix: '#',
+            ...(extendsClause !== undefined && { extendsClause }),
+            ...(docstring !== undefined && { docstring }),
+        }
+        const summary = this.buildClassSummary(declaration)
+
+        results.unshift({
+            name,
+            content: summary,
             chunkType: 'class',
             startLine: this.getStartLine(node),
             endLine: this.getEndLine(node),
@@ -161,41 +254,16 @@ export class PythonParser extends BaseParser {
             },
         })
 
-        const body = this.getChildByField(classNode, 'body')
-        if (!body) {
-            return results
-        }
-
-        for (let i = 0; i < body.childCount; i++) {
-            const child = body.child(i)
-            if (!child) {
-                continue
-            }
-
-            if (child.type === PY_NODE_TYPES.FUNCTION_DEFINITION) {
-                const method = this.extractMethod(child, name, content)
-                if (method) results.push(method)
-                continue
-            }
-
-            if (child.type === PY_NODE_TYPES.DECORATED_DEFINITION) {
-                const inner = this.getDecoratedInner(child)
-                if (
-                    inner &&
-                    inner.type === PY_NODE_TYPES.FUNCTION_DEFINITION
-                ) {
-                    const method = this.extractMethod(
-                        child,
-                        name,
-                        content,
-                        inner
-                    )
-                    if (method) results.push(method)
-                }
-            }
-        }
-
         return results
+    }
+
+    private extractBaseClasses(node: Parser.SyntaxNode, content: string): string | undefined {
+        const args = this.getChildByField(node, 'bases')
+        if (!args) {
+            return undefined
+        }
+        const text = this.getNodeText(args, content).trim()
+        return text || undefined
     }
 
     private extractMethod(
