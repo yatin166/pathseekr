@@ -6,11 +6,11 @@ export const ChunkQueries = {
         INSERT INTO ${Tables.CHUNKS} (
           id, document_id, content, chunk_type,
           language, name, start_line, end_line,
-          metadata, created_at
+          metadata, created_at, breadcrumb
         ) VALUES (
           @id, @documentId, @content, @chunkType,
           @language, @name, @startLine, @endLine,
-          @metadata, @createdAt
+          @metadata, @createdAt, @breadcrumb
         )
         ON CONFLICT(id) DO UPDATE SET
           content  = excluded.content,

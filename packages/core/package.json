@@ -8,7 +8,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "postbuild": "cp -r src/storage/migrations dist/storage/migrations",
+    "postbuild": "cp -r src/storage/migrations dist/storage",
     "dev": "tsc --watch",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit",

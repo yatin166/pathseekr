@@ -24,6 +24,7 @@ export interface Chunk {
     readonly endLine: number;
     readonly metadata: ChunkMetadata;
     readonly createdAt: Date;
+    readonly breadcrumb?: string;
 }
 
 export interface ChunkMetadata {

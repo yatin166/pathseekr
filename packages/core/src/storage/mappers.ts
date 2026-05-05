@@ -45,6 +45,7 @@ export function mapChunk(row: RawChunk): Chunk {
         endLine: row.end_line,
         metadata: JSON.parse(row.metadata) as Chunk['metadata'],
         createdAt: new Date(row.created_at),
+        breadcrumb: row.breadcrumb,
     }
 }
 

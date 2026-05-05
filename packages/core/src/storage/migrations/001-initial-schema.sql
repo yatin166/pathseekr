@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     start_line    INTEGER NOT NULL DEFAULT 0,
     end_line      INTEGER NOT NULL DEFAULT 0,
     metadata      TEXT NOT NULL DEFAULT '{}',
+    breadcrumb    TEXT,
     created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
