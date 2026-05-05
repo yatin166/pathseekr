@@ -253,7 +253,7 @@ export class CodebaseIndexer implements IIndexer {
 
         await this.documentRepository.save(document)
 
-        const chunks = this.chunkBuilder.build(parseResult, documentId)
+        const chunks = this.chunkBuilder.build(parseResult, documentId, filePath)
         await this.chunkRepository.saveBatch(chunks)
 
         await this.bm25IndexBuilder.buildForDocument(documentId)

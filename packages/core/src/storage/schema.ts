@@ -32,6 +32,7 @@ export const ChunkCols = {
     START_LINE: 'start_line',
     END_LINE: 'end_line',
     METADATA: 'metadata',
+    BREADCRUMB: 'breadcrumb',
     CREATED_AT: 'created_at',
 } as const
 
@@ -90,6 +91,7 @@ export interface RawChunk {
     end_line: number
     metadata: string
     created_at: string
+    breadcrumb: string
 }
 
 export interface RawChunkWithEmbedding extends RawChunk {

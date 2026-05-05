@@ -95,6 +95,7 @@ export class ChunkRepository implements IChunkRepository {
             endLine: chunk.endLine,
             metadata: JSON.stringify(chunk.metadata),
             createdAt: chunk.createdAt.toISOString(),
+            breadcrumb: chunk.breadcrumb,
         }
     }
 }

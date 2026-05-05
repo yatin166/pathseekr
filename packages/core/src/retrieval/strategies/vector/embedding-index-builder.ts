@@ -29,10 +29,7 @@ export class EmbeddingIndexBuilder {
     ) {}
 
     private buildEmbeddingText(chunk: Chunk): string {
-        if (
-            chunk.chunkType === 'function' ||
-            chunk.chunkType === 'method'
-        ) {
+        if (chunk.chunkType === 'function' || chunk.chunkType === 'method') {
             return chunk.content
         }
 
@@ -76,7 +73,10 @@ export class EmbeddingIndexBuilder {
 
         for (let i = 0; i < unembedded.length; i += batchSize) {
             const batch = unembedded.slice(i, i + batchSize)
-            const texts = batch.map((c) => this.buildEmbeddingText(c))
+            const texts = batch.map((c) => {
+                const embeddingText = this.buildEmbeddingText(c)
+                return c.breadcrumb ? `${c.breadcrumb}\n${embeddingText}` : embeddingText
+            })
 
             const results = await this.embeddingProvider.embedBatch(texts)
 
