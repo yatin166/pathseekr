@@ -18,14 +18,18 @@
     "typecheck": "turbo run typecheck",
     "reindex": "./scripts/reindex.sh",
     "reindex:core": "./scripts/reindex.sh ./packages/core/src",
-    "reindex:all": "./scripts/reindex.sh ./packages"
+    "reindex:all": "./scripts/reindex.sh ./packages",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.0",
+    "husky": "^9.1.7",
     "prettier": "^3.2.0",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
