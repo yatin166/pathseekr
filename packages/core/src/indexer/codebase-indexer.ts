@@ -14,6 +14,7 @@ import { ChunkBuilder } from './chunk-builder'
 import { ParserRegistry } from '../parsers/parser-registry'
 import { BM25IndexBuilder } from "../retrieval/strategies/bm25/bm25-index-builder";
 import { EmbeddingIndexBuilder } from "../retrieval/strategies/vector/embedding-index-builder";
+import {ProjectMapBuilder} from "./project-map-builder";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
@@ -44,6 +45,9 @@ export class CodebaseIndexer implements IIndexer {
 
         @inject(TYPES.EmbeddingIndexBuilder)
         private readonly embeddingIndexBuilder: EmbeddingIndexBuilder,
+
+        @inject(TYPES.ProjectMapBuilder)
+        private readonly projectMapBuilder: ProjectMapBuilder,
     ) {}
 
     async index(sourcePath: string, options: IndexOptions = {}, onProgress?: (progress: IndexingProgress) => void): Promise<IngestionJob> {
@@ -125,6 +129,9 @@ export class CodebaseIndexer implements IIndexer {
 
             const parseMs = Date.now() - parseStart
 
+            // Generate project map from all indexed documents
+            await this.projectMapBuilder.build(absolutePath)
+
             // Phase 1 complete — emit BM25 ready signal
             job = {
                 ...job,
@@ -150,8 +157,7 @@ export class CodebaseIndexer implements IIndexer {
                 this.emitProgress(job, onProgress)
 
                 // Get total unembedded count for progress
-                const unembedded =
-                    await this.chunkRepository.findUnembedded()
+                const unembedded = await this.chunkRepository.findUnembedded()
                 const totalToEmbed = unembedded.length
 
                 await this.embeddingIndexBuilder.embedPending(
