@@ -20,6 +20,7 @@ export const DocumentCols = {
     JOB_ID: 'job_id',
     CREATED_AT: 'created_at',
     UPDATED_AT: 'updated_at',
+    IMPORTS: 'imports',
 } as const
 
 export const ChunkCols = {
@@ -78,6 +79,7 @@ export interface RawDocument {
     job_id: string
     created_at: string
     updated_at: string
+    imports: string | null
 }
 
 export interface RawChunk {

@@ -17,6 +17,7 @@ export function mapDocument(row: RawDocument): Document {
         jobId: row.job_id,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
+        imports: row.imports ? JSON.parse(row.imports) as string[] : undefined,
     }
 }
 

@@ -6,18 +6,19 @@ export const DocumentQueries = {
         INSERT INTO ${Tables.DOCUMENTS} (
           id, source_path, source_type, document_type,
           language, name, checksum, size_bytes,
-          chunk_count, job_id, created_at, updated_at
+          chunk_count, job_id, created_at, updated_at, imports
         ) VALUES (
           @id, @sourcePath, @sourceType, @documentType,
           @language, @name, @checksum, @sizeBytes,
-          @chunkCount, @jobId, @createdAt, @updatedAt
+          @chunkCount, @jobId, @createdAt, @updatedAt, @imports
         )
         ON CONFLICT(source_path) DO UPDATE SET
           checksum    = excluded.checksum,
           size_bytes  = excluded.size_bytes,
           chunk_count = excluded.chunk_count,
           job_id      = excluded.job_id,
-          updated_at  = excluded.updated_at
+          updated_at  = excluded.updated_at,
+          imports     = excluded.imports
     `,
 
     FIND_BY_PATH: `SELECT * FROM ${Tables.DOCUMENTS} WHERE source_path = ?`,

@@ -15,6 +15,7 @@ export interface Document {
     readonly jobId: string;
     readonly createdAt: Date;
     readonly updatedAt: Date;
+    readonly imports?: string[]
 }
 
 export interface DocumentSummary {
