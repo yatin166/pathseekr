@@ -5,6 +5,7 @@ export const Tables = {
     BM25_TERMS: 'bm25_terms',
     INGESTION_JOBS: 'ingestion_jobs',
     MIGRATIONS: '_migrations',
+    EDGES: 'edges',
 } as const
 
 export const DocumentCols = {
@@ -66,6 +67,16 @@ export const JobCols = {
     CREATED_AT: 'created_at',
 } as const
 
+export const EdgeCols = {
+    ID: 'id',
+    FROM_CHUNK_ID: 'from_chunk_id',
+    TO_CHUNK_ID: 'to_chunk_id',
+    TO_NAME: 'to_name',
+    EDGE_TYPE: 'edge_type',
+    WEIGHT: 'weight',
+    RESOLVED: 'resolved',
+} as const
+
 export interface RawDocument {
     id: string
     source_path: string
@@ -107,4 +118,14 @@ export interface RawDocumentSummary {
     language: string
     chunk_count: number
     updated_at: string
+}
+
+export interface RawEdge {
+    id: string
+    from_chunk_id: string
+    to_chunk_id: string | null
+    to_name: string
+    edge_type: string
+    weight: number
+    resolved: number
 }

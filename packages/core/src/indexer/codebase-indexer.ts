@@ -15,6 +15,7 @@ import { ParserRegistry } from '../parsers/parser-registry'
 import { BM25IndexBuilder } from "../retrieval/strategies/bm25/bm25-index-builder";
 import { EmbeddingIndexBuilder } from "../retrieval/strategies/vector/embedding-index-builder";
 import {ProjectMapBuilder} from "./project-map-builder";
+import {EdgeBuilder} from "../retrieval/strategies/graph/edge-builder";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
@@ -48,6 +49,9 @@ export class CodebaseIndexer implements IIndexer {
 
         @inject(TYPES.ProjectMapBuilder)
         private readonly projectMapBuilder: ProjectMapBuilder,
+
+        @inject(TYPES.EdgeBuilder)
+        private readonly edgeBuilder: EdgeBuilder,
     ) {}
 
     async index(sourcePath: string, options: IndexOptions = {}, onProgress?: (progress: IndexingProgress) => void): Promise<IngestionJob> {
@@ -264,6 +268,7 @@ export class CodebaseIndexer implements IIndexer {
         await this.chunkRepository.saveBatch(chunks)
 
         await this.bm25IndexBuilder.buildForDocument(documentId)
+        this.edgeBuilder.buildForDocument(documentId)
 
         return { chunksCreated: chunks.length }
     }

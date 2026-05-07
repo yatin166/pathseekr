@@ -19,6 +19,7 @@ export const TYPES = {
     FileScanner: Symbol.for('FileScanner'),
     ChecksumService: Symbol.for('ChecksumService'),
     ChunkBuilder: Symbol.for('ChunkBuilder'),
+    EdgeBuilder: Symbol.for('EdgeBuilder'),
     ProjectMapBuilder: Symbol.for('ProjectMapBuilder'),
 
     // Retrieval
