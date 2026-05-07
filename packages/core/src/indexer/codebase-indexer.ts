@@ -133,6 +133,8 @@ export class CodebaseIndexer implements IIndexer {
 
             const parseMs = Date.now() - parseStart
 
+            this.edgeBuilder.buildAll()
+
             // Generate project map from all indexed documents
             await this.projectMapBuilder.build(absolutePath)
 
@@ -268,7 +270,6 @@ export class CodebaseIndexer implements IIndexer {
         await this.chunkRepository.saveBatch(chunks)
 
         await this.bm25IndexBuilder.buildForDocument(documentId)
-        this.edgeBuilder.buildForDocument(documentId)
 
         return { chunksCreated: chunks.length }
     }

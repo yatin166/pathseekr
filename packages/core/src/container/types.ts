@@ -12,6 +12,7 @@ export const TYPES = {
     VectorRetriever: Symbol.for('VectorRetriever'),
     EmbeddingIndexBuilder: Symbol.for('EmbeddingIndexBuilder'),
     HybridRetriever: Symbol.for('HybridRetriever'),
+    GraphRetriever: Symbol.for('GraphRetriever'),
 
     ParserRegistry: Symbol.for('ParserRegistry'),
 

@@ -26,6 +26,7 @@ const TS_NODE_TYPES = {
     FUNCTION_EXPRESSION: 'function_expression',
     EXPORT_STATEMENT: 'export_statement',
     ASYNC: 'async',
+    ABSTRACT_CLASS_DECLARATION: 'abstract_class_declaration',
 } as const
 
 @injectable()
@@ -48,6 +49,7 @@ export class TypeScriptParser extends BaseParser {
                     return false
 
                 case TS_NODE_TYPES.CLASS_DECLARATION:
+                case TS_NODE_TYPES.ABSTRACT_CLASS_DECLARATION:
                     extracted.push(
                         ...this.extractClass(target, node, content, lines)
                     )
