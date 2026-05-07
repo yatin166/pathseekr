@@ -41,25 +41,26 @@ export abstract class BaseParser implements IDocumentParser {
         return this.supportedExtensions.includes(ext)
     }
 
-    async parse(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _filePath: string,
-        content: string
-    ): Promise<ParseResult> {
+    protected stripQuotes(text: string): string {
+        return text.replace(/^['"`]|['"`]$/g, '').trim()
+    }
+
+    protected abstract extractImports(rootNode: Parser.SyntaxNode, content: string): string[]
+
+    async parse(_filePath: string, content: string): Promise<ParseResult> {
         const parser = this.getParser()
         const tree = parser.parse(content)
         const lines = content.split('\n')
 
         const extracted = this.extractNodes(tree.rootNode, content, lines)
-
-        const chunks = extracted.map((node) =>
-            this.buildChunk(node)
-        )
+        const imports = this.extractImports(tree.rootNode, content)
+        const chunks = extracted.map((node) => this.buildChunk(node))
 
         return {
             chunks,
             language: this.languageId,
             totalLines: lines.length,
+            imports,
         }
     }
 

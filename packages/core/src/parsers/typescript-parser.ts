@@ -85,6 +85,53 @@ export class TypeScriptParser extends BaseParser {
         return extracted
     }
 
+    protected extractImports(rootNode: Parser.SyntaxNode, content: string): string[] {
+        const imports: string[] = []
+
+        for (let i = 0; i < rootNode.childCount; i++) {
+            const node = rootNode.child(i)
+            if (!node) continue
+
+            // import x from './x'  |  import type { X } from './x'
+            if (node.type === 'import_statement') {
+                const source = node.childForFieldName('source')
+                if (source) {
+                    imports.push(this.stripQuotes(this.getNodeText(source, content)))
+                }
+                continue
+            }
+
+            // const x = require('./x')
+            if (
+                node.type === TS_NODE_TYPES.LEXICAL_DECLARATION ||
+                node.type === TS_NODE_TYPES.VARIABLE_DECLARATION
+            ) {
+                for (let j = 0; j < node.childCount; j++) {
+                    const declarator = node.child(j)
+                    if (declarator?.type !== TS_NODE_TYPES.VARIABLE_DECLARATOR) continue
+                    const value = declarator.childForFieldName('value')
+                    if (value?.type === 'call_expression') {
+                        const fn = value.childForFieldName('function')
+                        if (fn && this.getNodeText(fn, content) === 'require') {
+                            const args = value.childForFieldName('arguments')
+                            const firstArg = args?.child(1)
+                            if (firstArg?.type === 'string') {
+                                imports.push(this.stripQuotes(this.getNodeText(firstArg, content)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return [...new Set(imports)]
+    }
+
+    private stripGenerics(typeName: string): string {
+        const idx = typeName.indexOf('<')
+        return idx >= 0 ? typeName.slice(0, idx).trim() : typeName.trim()
+    }
+
     private extractFunction(
         node: Parser.SyntaxNode,
         originalNode: Parser.SyntaxNode,
@@ -193,6 +240,15 @@ export class TypeScriptParser extends BaseParser {
             metadata: {
                 isExported,
                 ...(docstring !== undefined && { docstring }),
+                ...(extendsClause !== undefined && {
+                    extendsNames: [this.stripGenerics(extendsClause)],
+                }),
+                ...(implementsClause !== undefined && {
+                    implementsNames: implementsClause
+                        .split(',')
+                        .map((s) => this.stripGenerics(s.trim()))
+                        .filter(Boolean),
+                }),
             },
         })
 
