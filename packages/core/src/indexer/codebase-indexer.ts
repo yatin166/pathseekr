@@ -255,6 +255,7 @@ export class CodebaseIndexer implements IIndexer {
             jobId,
             createdAt: new Date(),
             updatedAt: new Date(),
+            imports: parseResult.imports,
         }
 
         await this.documentRepository.save(document)
