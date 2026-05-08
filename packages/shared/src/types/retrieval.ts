@@ -2,7 +2,7 @@ import {Chunk} from "./chunk";
 import {DocumentSummary} from "./document";
 
 
-export type RetrievalStrategy = | 'bm25' | 'vector' | 'hybrid'
+export type RetrievalStrategy = 'bm25' | 'vector' | 'hybrid' | 'graph'
 
 export interface SearchQuery {
     readonly query: string;

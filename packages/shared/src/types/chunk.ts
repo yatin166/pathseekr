@@ -35,6 +35,8 @@ export interface ChunkMetadata {
     readonly isAsync?: boolean;
     readonly parameters?: string[];
     readonly returnType?: string;
+    readonly extendsNames?: string[];
+    readonly implementsNames?: string[];
 }
 
 export interface StoredChunk extends Chunk {

@@ -126,6 +126,7 @@ export class DocumentRepository implements IDocumentRepository {
             jobId: document.jobId,
             createdAt: document.createdAt.toISOString(),
             updatedAt: document.updatedAt.toISOString(),
+            imports: document.imports ? JSON.stringify(document.imports) : null,
         }
     }
 }

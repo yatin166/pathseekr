@@ -137,6 +137,40 @@ export class PythonParser extends BaseParser {
         return lines.join('\n')
     }
 
+    protected extractImports(rootNode: Parser.SyntaxNode, content: string): string[] {
+        const imports: string[] = []
+
+        for (let i = 0; i < rootNode.childCount; i++) {
+            const node = rootNode.child(i)
+            if (!node) continue
+
+            if (node.type === 'import_statement') {
+                for (let j = 0; j < node.childCount; j++) {
+                    const child = node.child(j)
+                    if (!child) {
+                        continue
+                    }
+                    if (child.type === 'dotted_name') {
+                        imports.push(this.getNodeText(child, content).trim())
+                    } else if (child.type === 'aliased_import') {
+                        const nameNode = child.child(0)
+                        if (nameNode) imports.push(this.getNodeText(nameNode, content).trim())
+                    }
+                }
+                continue
+            }
+
+            if (node.type === 'import_from_statement') {
+                const moduleNode = node.childForFieldName('module_name') ?? node.child(1)
+                if (moduleNode) {
+                    imports.push(this.getNodeText(moduleNode, content).trim())
+                }
+            }
+        }
+
+        return [...new Set(imports)]
+    }
+
     private extractFunction(node: Parser.SyntaxNode, content: string): ExtractedNode[] {
         const funcNode =
             node.type === PY_NODE_TYPES.DECORATED_DEFINITION
@@ -267,6 +301,12 @@ export class PythonParser extends BaseParser {
             metadata: {
                 isExported: true,
                 ...(docstring !== undefined && { docstring }),
+                ...(extendsClause !== undefined && {          // ← add
+                    extendsNames: extendsClause
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                }),
             },
         })
 

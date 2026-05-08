@@ -76,6 +76,45 @@ export class JavaScriptParser extends BaseParser {
         return extracted
     }
 
+    protected extractImports(rootNode: Parser.SyntaxNode, content: string): string[] {
+        const imports: string[] = []
+
+        for (let i = 0; i < rootNode.childCount; i++) {
+            const node = rootNode.child(i)
+            if (!node) continue
+
+            if (node.type === 'import_statement') {
+                const source = node.childForFieldName('source')
+                if (source) {
+                    imports.push(this.stripQuotes(this.getNodeText(source, content)))
+                }
+                continue
+            }
+
+            if (node.type === JS_NODE_TYPES.LEXICAL_DECLARATION || node.type === JS_NODE_TYPES.VARIABLE_DECLARATION) {
+                for (let j = 0; j < node.childCount; j++) {
+                    const declarator = node.child(j)
+                    if (declarator?.type !== JS_NODE_TYPES.VARIABLE_DECLARATOR) {
+                        continue
+                    }
+                    const value = declarator.childForFieldName('value')
+                    if (value?.type === 'call_expression') {
+                        const fn = value.childForFieldName('function')
+                        if (fn && this.getNodeText(fn, content) === 'require') {
+                            const args = value.childForFieldName('arguments')
+                            const firstArg = args?.child(1)
+                            if (firstArg?.type === 'string') {
+                                imports.push(this.stripQuotes(this.getNodeText(firstArg, content)))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return [...new Set(imports)]
+    }
+
     private extractFunction(
         node: Parser.SyntaxNode,
         originalNode: Parser.SyntaxNode,
@@ -184,6 +223,7 @@ export class JavaScriptParser extends BaseParser {
             metadata: {
                 isExported,
                 ...(docstring !== undefined && { docstring }),
+                ...(extendsClause !== undefined && { extendsNames: [extendsClause] }),  // ← add
             },
         })
 

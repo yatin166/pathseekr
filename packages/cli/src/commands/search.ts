@@ -14,6 +14,8 @@ const getRetriever = (strategy: RetrievalStrategy): IRetriever => {
             return container.get<IRetriever>(TYPES.VectorRetriever)
         case 'hybrid':
             return container.get<IRetriever>(TYPES.HybridRetriever)
+        case 'graph':
+            return container.get<IRetriever>(TYPES.GraphRetriever)
         default:
             throw new Error(`Unknown retrieval strategy: ${strategy}`)
     }
@@ -29,7 +31,7 @@ export const searchCommand = new Command('search')
     )
     .option(
         '-s, --strategy <strategy>',
-        'Retrieval strategy: hybrid, bm25, vector',
+        'Retrieval strategy: hybrid, bm25, vector, graph',
         'hybrid'
     )
     .action(async (query: string, options) => {

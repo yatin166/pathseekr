@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS documents (
     size_bytes    INTEGER NOT NULL DEFAULT 0,
     chunk_count   INTEGER NOT NULL DEFAULT 0,
     job_id        TEXT NOT NULL,
+    imports       TEXT,
     created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

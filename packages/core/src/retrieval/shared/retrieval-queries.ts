@@ -25,6 +25,13 @@ export const RetrievalQueries = {
         WHERE c.id IN (${Array(idCount).fill('?').join(', ')})
     `,
 
+    CHUNKS_BY_NAME_MATCH: `
+        SELECT id, name, chunk_type
+        FROM chunks
+        WHERE LOWER(name) LIKE LOWER(?)
+        ORDER BY length(name) ASC LIMIT ?
+    `,
+
 } as const
 
 export interface RawChunkWithDocument {
@@ -41,4 +48,10 @@ export interface RawChunkWithDocument {
     source_path: string
     doc_name: string
     chunk_count: number
+}
+
+export interface RawNameMatchRow {
+    id: string
+    name: string
+    chunk_type: string
 }

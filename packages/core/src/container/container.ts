@@ -23,6 +23,8 @@ import {VectorRetriever} from "../retrieval/strategies/vector/vector-retriever";
 import {EmbeddingIndexBuilder} from "../retrieval/strategies/vector/embedding-index-builder";
 import {HybridRetriever} from "../retrieval/strategies/hybrid/hybrid-retriever";
 import {ProjectMapBuilder} from "../indexer/project-map-builder";
+import {EdgeBuilder} from "../retrieval/strategies/graph/edge-builder";
+import {GraphRetriever} from "../retrieval/strategies/graph/graph-retriever";
 
 export function createContainer(config: SpyglassConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
@@ -65,6 +67,10 @@ export function createContainer(config: SpyglassConfig): Container {
         .to(ChunkBuilder)
 
     container
+        .bind<EdgeBuilder>(TYPES.EdgeBuilder)
+        .to(EdgeBuilder)
+
+    container
         .bind<ProjectMapBuilder>(TYPES.ProjectMapBuilder)
         .to(ProjectMapBuilder)
 
@@ -84,6 +90,10 @@ export function createContainer(config: SpyglassConfig): Container {
     container
         .bind<BM25Retriever>(TYPES.BM25Retriever)
         .to(BM25Retriever)
+
+    container
+        .bind<GraphRetriever>(TYPES.GraphRetriever)
+        .to(GraphRetriever)
 
     // Vector Embedding Retrieval components
     container

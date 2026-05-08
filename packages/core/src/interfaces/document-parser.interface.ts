@@ -4,6 +4,7 @@ export interface ParseResult {
     readonly chunks: Chunk[];
     readonly language: Language;
     readonly totalLines: number;
+    readonly imports?: string[];
 }
 
 export interface IDocumentParser {

@@ -107,6 +107,32 @@ export class JavaParser extends BaseParser {
         return lines.join('\n')
     }
 
+    protected extractImports(rootNode: Parser.SyntaxNode, content: string): string[] {
+        const imports: string[] = []
+
+        for (let i = 0; i < rootNode.childCount; i++) {
+            const node = rootNode.child(i)
+            if (!node) {
+                continue
+            }
+
+            if (node.type === 'import_declaration') {
+                for (let j = 0; j < node.childCount; j++) {
+                    const child = node.child(j)
+                    if (!child) {
+                        continue
+                    }
+                    if (child.type === 'scoped_identifier' || child.type === 'identifier') {
+                        imports.push(this.getNodeText(child, content).trim())
+                        break
+                    }
+                }
+            }
+        }
+
+        return [...new Set(imports)]
+    }
+
     private extractClass(node: Parser.SyntaxNode, content: string, lines: string[]): ExtractedNode[] {
         const name = this.findIdentifier(node, content)
         if (!name) {
@@ -165,10 +191,24 @@ export class JavaParser extends BaseParser {
             metadata: {
                 isExported: isPublic,
                 ...(javadoc !== undefined && { docstring: javadoc }),
+                ...(extendsClause !== undefined && {
+                    extendsNames: [this.stripJavaGenerics(extendsClause)],
+                }),
+                ...(implementsClause !== undefined && {
+                    implementsNames: implementsClause
+                        .split(',')
+                        .map((s) => this.stripJavaGenerics(s.trim()))
+                        .filter(Boolean),
+                }),
             },
         })
 
         return results
+    }
+
+    private stripJavaGenerics(typeName: string): string {
+        const idx = typeName.indexOf('<')
+        return idx >= 0 ? typeName.slice(0, idx).trim() : typeName.trim()
     }
 
     private extractJavaHeritage(node: Parser.SyntaxNode, content: string): { extendsClause?: string; implementsClause?: string } {

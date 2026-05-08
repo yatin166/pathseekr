@@ -12,6 +12,7 @@ export const TYPES = {
     VectorRetriever: Symbol.for('VectorRetriever'),
     EmbeddingIndexBuilder: Symbol.for('EmbeddingIndexBuilder'),
     HybridRetriever: Symbol.for('HybridRetriever'),
+    GraphRetriever: Symbol.for('GraphRetriever'),
 
     ParserRegistry: Symbol.for('ParserRegistry'),
 
@@ -19,6 +20,7 @@ export const TYPES = {
     FileScanner: Symbol.for('FileScanner'),
     ChecksumService: Symbol.for('ChecksumService'),
     ChunkBuilder: Symbol.for('ChunkBuilder'),
+    EdgeBuilder: Symbol.for('EdgeBuilder'),
     ProjectMapBuilder: Symbol.for('ProjectMapBuilder'),
 
     // Retrieval
