@@ -86,7 +86,7 @@ export class GraphRetriever implements IRetriever {
     ) {}
 
     async isReady(): Promise<boolean> {
-        const db     = this.connection.getDb()
+        const db = this.connection.getDb()
         const result = db
             .prepare(EdgeQueries.COUNT_RESOLVED)
             .get() as { count: number }

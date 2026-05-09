@@ -14,8 +14,8 @@ import { ChunkBuilder } from './chunk-builder'
 import { ParserRegistry } from '../parsers/parser-registry'
 import { BM25IndexBuilder } from "../retrieval/strategies/bm25/bm25-index-builder";
 import { EmbeddingIndexBuilder } from "../retrieval/strategies/vector/embedding-index-builder";
-import {ProjectMapBuilder} from "./project-map-builder";
-import {EdgeBuilder} from "../retrieval/strategies/graph/edge-builder";
+import { ProjectMapBuilder } from "./project-map-builder";
+import { EdgeBuilder } from "../retrieval/strategies/graph/edge-builder";
 
 @injectable()
 export class CodebaseIndexer implements IIndexer {
@@ -75,9 +75,11 @@ export class CodebaseIndexer implements IIndexer {
 
         try {
             // ── Phase 1: Scan ──────────────────────────────────────────
+            const scanStart = Date.now()
             this.emitProgress(job, onProgress)
 
             const scanResult = this.fileScanner.scan(absolutePath)
+            const scanMs = Date.now() - scanStart
 
             const parsableFiles = scanResult.files.filter((f) =>
                 this.parserRegistry.canParse(f.absolutePath)
@@ -85,13 +87,23 @@ export class CodebaseIndexer implements IIndexer {
 
             job = {
                 ...job,
-                totalFiles: parsableFiles.length,
-                skippedFiles:
-                    scanResult.skippedCount +
-                    (scanResult.files.length - parsableFiles.length),
-                status: 'parsing',
-                phase: 'parsing',
+                totalFiles:   parsableFiles.length,
+                skippedFiles: scanResult.skippedCount + (scanResult.files.length - parsableFiles.length),
+                status:       'parsing',
+                phase:        'parsing',
             }
+
+            // Emit parsing start with scanMs so CLI can show scan completion
+            onProgress?.({
+                jobId:           job.id,
+                status:          'parsing',
+                phase:           'parsing',
+                processedFiles:  0,
+                totalFiles:      job.totalFiles,
+                totalChunks:     0,
+                percentComplete: 0,
+                scanMs,
+            })
 
             this.emitProgress(job, onProgress)
 
@@ -133,16 +145,13 @@ export class CodebaseIndexer implements IIndexer {
 
             const parseMs = Date.now() - parseStart
 
-            this.edgeBuilder.buildAll()
+            // Phase 2: Graph
+            const graphStart = Date.now()
 
-            // Generate project map from all indexed documents
-            await this.projectMapBuilder.build(absolutePath)
-
-            // Phase 1 complete — emit BM25 ready signal
             job = {
                 ...job,
-                status: 'parsing',
-                phase: 'parsing',
+                status: 'graphing',
+                phase: 'graphing',
                 processedFiles,
                 totalChunks,
                 parseMs,
@@ -150,7 +159,27 @@ export class CodebaseIndexer implements IIndexer {
 
             this.emitProgress(job, onProgress)
 
-            // ── Phase 2: Embed all pending chunks ──────────────────────
+            this.edgeBuilder.buildAll()
+            await this.projectMapBuilder.build(absolutePath)
+
+            const graphMs = Date.now() - graphStart
+            job = { ...job, graphMs }
+
+            // Emit graph completion with graphMs so CLI can show it
+            onProgress?.({
+                jobId: job.id,
+                status: 'graphing',
+                phase: 'graphing',
+                processedFiles: job.processedFiles,
+                totalFiles: job.totalFiles,
+                totalChunks: job.totalChunks,
+                percentComplete: 100,
+                graphMs,
+            })
+
+            this.emitProgress(job, onProgress)
+
+            // Phase 3: Embed all pending chunks
             if (!options.skipEmbedding) {
                 const embedStart = Date.now()
 
@@ -162,47 +191,34 @@ export class CodebaseIndexer implements IIndexer {
 
                 this.emitProgress(job, onProgress)
 
-                // Get total unembedded count for progress
-                const unembedded = await this.chunkRepository.findUnembedded()
+                const unembedded   = await this.chunkRepository.findUnembedded()
                 const totalToEmbed = unembedded.length
 
-                await this.embeddingIndexBuilder.embedPending(
-                    (embedProgress) => {
-                        job = {
-                            ...job,
-                            status: 'embedding',
-                            phase: 'embedding',
-                        }
-
-                        // Emit embedding progress
-                        onProgress?.({
-                            jobId: job.id,
-                            status: 'embedding',
-                            phase: 'embedding',
-                            processedFiles: job.processedFiles,
-                            totalFiles: job.totalFiles,
-                            totalChunks: job.totalChunks,
-                            percentComplete: embedProgress.percentComplete,
-                            processedChunks: embedProgress.processed,
-                            totalChunksToEmbed: totalToEmbed,
-                        })
-                    }
-                )
+                await this.embeddingIndexBuilder.embedPending((embedProgress) => {
+                    onProgress?.({
+                        jobId: job.id,
+                        status: 'embedding',
+                        phase: 'embedding',
+                        processedFiles: job.processedFiles,
+                        totalFiles: job.totalFiles,
+                        totalChunks: job.totalChunks,
+                        percentComplete: embedProgress.percentComplete,
+                        processedChunks: embedProgress.processed,
+                        totalChunksToEmbed: totalToEmbed,
+                    })
+                })
 
                 const embedMs = Date.now() - embedStart
 
-                job = {
-                    ...job,
-                    embedMs,
-                }
+                job = { ...job, embedMs }
             }
 
-            // ── Complete ───────────────────────────────────────────────
+            // Complete
             job = {
                 ...job,
                 status: 'completed',
-                phase: 'embedding',
-                completedAt: new Date(),
+                phase: options.skipEmbedding ? 'graphing' : 'embedding',
+                completedAt:  new Date(),
                 processedFiles,
                 totalChunks,
             }
