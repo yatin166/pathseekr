@@ -1,6 +1,6 @@
-export type JobStatus = | 'queued' | 'scanning' | 'parsing' | 'embedding' | 'completed' | 'failed'
+export type JobStatus = | 'queued' | 'scanning' | 'parsing' | 'graphing' | 'embedding' | 'completed' | 'failed'
 
-export type IndexingPhase = 'parsing' | 'embedding'
+export type IndexingPhase = 'parsing' | 'embedding' | 'graphing'
 
 export interface IngestionJob {
     readonly id: string
@@ -16,6 +16,7 @@ export interface IngestionJob {
     readonly completedAt?: Date
     readonly createdAt: Date
     readonly parseMs?: number
+    readonly graphMs?: number
     readonly embedMs?: number
 }
 
@@ -30,6 +31,8 @@ export interface IndexingProgress {
     readonly percentComplete: number
     readonly processedChunks?: number
     readonly totalChunksToEmbed?: number
+    readonly scanMs?: number
+    readonly graphMs?: number
 }
 
 export interface IndexStats {
