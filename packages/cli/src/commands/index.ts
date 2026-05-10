@@ -7,6 +7,18 @@ import type { IndexingProgress } from '@spyglass/shared'
 import { config } from '../config'
 import { formatDuration } from '../ui/progress'
 
+const SKIP_REASON_LABELS: Record<string, string> = {
+    ignored_extension: 'unsupported file type',
+    hidden_file: 'hidden file',
+    declaration_file: 'TypeScript declaration file (.d.ts)',
+    too_large: 'file too large',
+    empty_file: 'empty file',
+    exclude_pattern: 'matches exclude pattern',
+    stat_error: 'could not read file',
+    unreadable_directory: 'unreadable directory',
+}
+
+
 export const indexCommand = new Command('index')
     .description('Index a local directory or file')
     .argument('<path>', 'Path to the directory or file to index')
@@ -22,49 +34,48 @@ export const indexCommand = new Command('index')
 
         const container = createContainer(config)
         const indexer   = container.get<IIndexer>(TYPES.IIndexer)
+        const startedAt = Date.now()
 
-        let lastLine = ''
+        let lastLine      = ''
+        let currentStatus = ''
+        let stepStartTime = Date.now()
 
-        const clearProgress = () => {
-            if (lastLine) {
-                process.stdout.write('\r' + ' '.repeat(lastLine.length) + '\r')
-                lastLine = ''
-            }
+        const clearProgress = (): void => {
+            if (!lastLine) return
+            process.stdout.write('\r' + ' '.repeat(lastLine.length) + '\r')
+            lastLine = ''
         }
 
-        const writeProgress = (line: string) => {
+        const writeProgress = (line: string): void => {
             clearProgress()
-            process.stdout.write(`    ${line}`)
-            lastLine = `    ${line}`
+            const prefixed = `    ${line}`
+            process.stdout.write(prefixed)
+            lastLine = prefixed
         }
 
-        const stepStart = (label: string) => {
+        const stepStart = (label: string): void => {
             clearProgress()
             console.log(`  ${chalk.dim('◆')} ${chalk.dim(label)}`)
         }
 
-        const stepDone = (label: string, detail: string, ms: number) => {
+        const stepDone = (label: string, detail: string, ms: number): void => {
             clearProgress()
             console.log(
                 `  ${chalk.green('✓')} ` +
-                `${chalk.bold(label.padEnd(16))} ` +
-                `${detail.padEnd(28)} ` +
+                `${chalk.bold(label.padEnd(18))} ` +
+                `${detail.padEnd(30)} ` +
                 chalk.dim(formatDuration(ms))
             )
         }
 
-        const stepSkipped = (label: string, reason: string) => {
+        const stepSkipped = (label: string, reason: string): void => {
             clearProgress()
             console.log(
                 `  ${chalk.dim('–')} ` +
-                `${chalk.dim(label.padEnd(16))} ` +
+                `${chalk.dim(label.padEnd(18))} ` +
                 chalk.dim(reason)
             )
         }
-
-        let currentStatus = ''
-        let stepStartTime = Date.now()
-        const startedAt = Date.now()
 
         stepStart('Scanning files')
 
@@ -78,47 +89,65 @@ export const indexCommand = new Command('index')
                 const { status } = progress
 
                 if (status !== currentStatus) {
+                    clearProgress()
 
-                    if (currentStatus === 'scanning' && status === 'parsing') {
-                        stepDone('Scanning', `${progress.totalFiles} files found`, progress.scanMs ?? 0)
-                        console.log()
-                        stepStart('Parsing & BM25 index')
-                    }
+                    switch (`${currentStatus}→${status}`) {
 
-                    else if (currentStatus === 'parsing' && status === 'graphing') {
-                        stepDone(
-                            'Parsing & BM25',
-                            `${progress.totalChunks} chunks indexed`,
-                            Date.now() - stepStartTime
-                        )
-                        console.log()
-                        stepStart('Building graph')
-                    }
+                        // Scan complete, parsing starting
+                        case '→parsing':
+                        case 'scanning→parsing':
+                            stepDone(
+                                'Scanning',
+                                `${progress.totalFiles} files found`,
+                                progress.scanMs ?? 0,
+                            )
+                            console.log()
+                            stepStart('Parsing & BM25 index')
+                            break
 
-                    else if (currentStatus === 'graphing' && status === 'embedding') {
-                        console.log()
-                        stepStart('Generating embeddings')
+                        // Parse complete, graph starting
+                        case 'parsing→graphing':
+                            stepDone(
+                                'Parsing & BM25',
+                                `${progress.totalChunks} chunks indexed`,
+                                Date.now() - stepStartTime,
+                            )
+                            console.log()
+                            stepStart('Building graph')
+                            break
+
+                        // Graph complete, embedding starting
+                        case 'graphing→embedding':
+                            console.log()
+                            stepStart('Generating embeddings')
+                            break
                     }
 
                     currentStatus = status
                     stepStartTime = Date.now()
                 }
 
+                // Graph completion signal
+                // The graph phase emits two events: one when it starts
+                // (no graphMs) and one when it finishes (has graphMs).
                 if (status === 'graphing' && progress.graphMs !== undefined) {
                     stepDone('Graph', 'edges resolved', progress.graphMs)
                 }
 
+                // In-progress bars
                 if (status === 'parsing' && progress.totalFiles > 0) {
-                    writeProgress(renderProgress(progress))
+                    writeProgress(renderParsingProgress(progress))
                 }
 
                 if (status === 'embedding') {
-                    writeProgress(renderProgress(progress))
+                    writeProgress(renderEmbeddingProgress(progress))
                 }
             }
         )
 
         clearProgress()
+
+        // Post-job steps
 
         if (job.status === 'completed') {
 
@@ -129,10 +158,11 @@ export const indexCommand = new Command('index')
                 stepDone(
                     'Embeddings',
                     `${job.totalChunks} chunks embedded`,
-                    job.embedMs ?? 0
+                    job.embedMs ?? 0,
                 )
             }
 
+            // ── Summary ────────────────────────────────────────────────
             console.log(
                 `\n${chalk.dim('─'.repeat(50))}\n` +
                 `${chalk.green('✓')} Done in ${chalk.bold(formatDuration(Date.now() - startedAt))}\n`
@@ -143,17 +173,32 @@ export const indexCommand = new Command('index')
                 `from ${chalk.bold(String(job.processedFiles))} files`
             )
 
-            if (job.parseMs) {
-                console.log(chalk.dim(`  Parsing:     ${formatDuration(job.parseMs)}`))
+            // File status breakdown
+            const statusParts = [
+                job.newFiles     ? chalk.green(`${job.newFiles} new`)           : '',
+                job.changedFiles ? chalk.yellow(`${job.changedFiles} changed`)   : '',
+            ].filter(Boolean)
+
+            if (statusParts.length > 0) {
+                console.log(`  ${statusParts.join('  ')}`)
             }
-            if (job.graphMs) {
-                console.log(chalk.dim(`  Graph:       ${formatDuration(job.graphMs)}`))
+
+            if ((job.unchangedFiles ?? 0) > 0) {
+                console.log(chalk.dim(`  ${job.unchangedFiles} unchanged — skipped`))
             }
-            if (job.embedMs) {
-                console.log(chalk.dim(`  Embedding:   ${formatDuration(job.embedMs)}`))
-            }
-            if (job.skippedFiles > 0) {
-                console.log(chalk.dim(`  Skipped:     ${job.skippedFiles} files unchanged`))
+
+            // Files not indexed breakdown
+            if (job.skippedFiles > 0 && job.skippedReasons) {
+                console.log()
+                console.log(chalk.dim(`  ${job.skippedFiles} files not indexed:`))
+
+                const sorted = Object.entries(job.skippedReasons)
+                    .sort(([, a], [, b]) => b - a)
+
+                for (const [reason, count] of sorted) {
+                    const label = SKIP_REASON_LABELS[reason] ?? reason
+                    console.log(chalk.dim(`    ${String(count).padStart(4)}  ${label}`))
+                }
             }
 
         } else if (job.status === 'failed') {
@@ -164,22 +209,33 @@ export const indexCommand = new Command('index')
         console.log()
     })
 
-function renderProgress(progress: IndexingProgress): string {
-    const isEmbedding = progress.phase === 'embedding'
-    const width = 25
-    const filled = Math.floor(progress.percentComplete / 4)
-    const bar =
-        chalk.cyan('█'.repeat(filled)) +
-        chalk.dim('░'.repeat(width - filled))
+function renderBar(percent: number, width = 20): string {
+    const filled = Math.min(width, Math.max(0, Math.floor(percent / (100 / width))))
+    return chalk.cyan('█'.repeat(filled)) + chalk.dim('░'.repeat(width - filled))
+}
+
+function renderParsingProgress(progress: IndexingProgress): string {
+    const bar = renderBar(progress.percentComplete)
     const pct = String(progress.percentComplete).padStart(3)
 
-    if (isEmbedding && progress.processedChunks !== undefined) {
-        return `[${bar}] ${pct}%  ${progress.processedChunks}/${progress.totalChunksToEmbed ?? '?'} chunks`
-    }
+    const fileStat = `${progress.processedFiles}/${progress.totalFiles} files`
 
-    return (
-        `[${bar}] ${pct}%  ` +
-        `${progress.processedFiles}/${progress.totalFiles} files  ` +
-        chalk.dim(`${progress.totalChunks} chunks`)
-    )
+    const statusParts = [
+        progress.newFiles ? chalk.green(`${progress.newFiles} new`)           : '',
+        progress.changedFiles ? chalk.yellow(`${progress.changedFiles} changed`)   : '',
+        progress.unchangedFiles ? chalk.dim(`${progress.unchangedFiles} unchanged`)  : '',
+    ].filter(Boolean).join('  ')
+
+    return `[${bar}] ${pct}%  ${fileStat}  ${statusParts}`
+}
+
+function renderEmbeddingProgress(progress: IndexingProgress): string {
+    const bar = renderBar(progress.percentComplete)
+    const pct = String(progress.percentComplete).padStart(3)
+
+    const chunkStat = progress.processedChunks !== undefined
+        ? `${progress.processedChunks}/${progress.totalChunksToEmbed ?? '?'} chunks`
+        : `${progress.totalChunks} chunks`
+
+    return `[${bar}] ${pct}%  ${chunkStat}`
 }
