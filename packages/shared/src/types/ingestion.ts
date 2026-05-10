@@ -18,6 +18,10 @@ export interface IngestionJob {
     readonly parseMs?: number
     readonly graphMs?: number
     readonly embedMs?: number
+    readonly newFiles?: number
+    readonly changedFiles?: number
+    readonly unchangedFiles?: number
+    readonly skippedReasons?: Record<string, number>
 }
 
 export interface IndexingProgress {
@@ -33,6 +37,9 @@ export interface IndexingProgress {
     readonly totalChunksToEmbed?: number
     readonly scanMs?: number
     readonly graphMs?: number
+    readonly newFiles?: number
+    readonly changedFiles?: number
+    readonly unchangedFiles?: number
 }
 
 export interface IndexStats {
