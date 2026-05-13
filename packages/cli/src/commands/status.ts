@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { createContainer, TYPES } from '@spyglass/core'
-import type { IDocumentRepository } from '@spyglass/core'
+import { createContainer, TYPES } from '@pathseekr/core'
+import type { IDocumentRepository } from '@pathseekr/core'
 import { config } from '../config'
 import { renderStatsTable, renderLanguageTable } from '../ui/table'
 
@@ -16,10 +16,10 @@ export const statusCommand = new Command('status')
 
         const stats = await documentRepository.getStats()
 
-        console.log(`\n${chalk.bold('Spyglass')} ${chalk.dim('— index status')}\n`)
+        console.log(`\n${chalk.bold('Pathseekr')} ${chalk.dim('— index status')}\n`)
 
         if (stats.totalDocuments === 0) {
-            console.log(chalk.dim('  No files indexed yet. Run: spyglass index <path>\n'))
+            console.log(chalk.dim('  No files indexed yet. Run: pathseekr index <path>\n'))
             return
         }
 

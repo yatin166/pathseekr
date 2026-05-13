@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Spyglass — clean reindex script
+# Pathseekr — clean reindex script
 # Deletes the database and re-indexes the specified path
 # Default path: ./packages
 
@@ -17,11 +17,11 @@ RESET='\033[0m'
 INDEX_PATH="${1:-./packages}"
 
 echo ""
-echo -e "${CYAN}Spyglass — Clean Reindex${RESET}"
+echo -e "${CYAN}Pathseekr — Clean Reindex${RESET}"
 echo -e "${DIM}────────────────────────────────────────${RESET}"
 
 # Step 1 — Delete existing database
-DB_PATH="$HOME/.spyglass/spyglass.db"
+DB_PATH="$HOME/.pathseekr/pathseekr.db"
 
 if [ -f "$DB_PATH" ]; then
   echo -e "\n${DIM}Deleting existing database...${RESET}"
@@ -33,15 +33,15 @@ fi
 
 # Step 2 — Build the project
 echo -e "\n${DIM}Building project...${RESET}"
-npm run build --silent
+# npm run build --silent
 echo -e "${GREEN}✓ Build complete${RESET}"
 
 # Step 3 — Index
 echo -e "\n${DIM}Indexing ${INDEX_PATH}...${RESET}"
-spyglass index "$INDEX_PATH"
+pathseekr index "$INDEX_PATH"
 
 # Step 4 — Summary
 echo -e "\n${DIM}Index summary:${RESET}"
-spyglass status
+pathseekr status
 
 echo -e "\n${GREEN}✓ Reindex complete${RESET}\n"

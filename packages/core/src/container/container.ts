@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Container } from 'inversify'
-import type { SpyglassConfig } from '@spyglass/shared'
+import type { PathseekrConfig } from '@pathseekr/shared'
 import { TYPES } from './types'
 import { DatabaseConnection } from '../storage/database'
 import { ChunkRepository } from '../storage/chunk-repository'
@@ -26,12 +26,12 @@ import {ProjectMapBuilder} from "../indexer/project-map-builder";
 import {EdgeBuilder} from "../retrieval/strategies/graph/edge-builder";
 import {GraphRetriever} from "../retrieval/strategies/graph/graph-retriever";
 
-export function createContainer(config: SpyglassConfig): Container {
+export function createContainer(config: PathseekrConfig): Container {
     const container = new Container({ defaultScope: 'Singleton' })
 
     // Config
     container
-        .bind<SpyglassConfig>(TYPES.SpyglassConfig)
+        .bind<PathseekrConfig>(TYPES.PathseekrConfig)
         .toConstantValue(config)
 
     // Infrastructure

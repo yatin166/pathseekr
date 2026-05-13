@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const JSLanguage = require('tree-sitter-javascript')
-import type { Language } from '@spyglass/shared'
+import type { Language } from '@pathseekr/shared'
 import {BaseParser, ClassDeclaration, type ExtractedNode, TreeSitterLanguage,} from './base/base-parser'
 
 const JS_NODE_TYPES = {

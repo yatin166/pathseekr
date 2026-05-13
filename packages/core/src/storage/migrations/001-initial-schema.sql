@@ -1,5 +1,5 @@
 -- Migration 001: Initial Schema
--- Creates the foundational tables for Spyglass
+-- Creates the foundational tables for Pathseekr
 
 -- Documents table
 -- One row per indexed file

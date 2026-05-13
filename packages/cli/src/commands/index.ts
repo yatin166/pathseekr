@@ -1,9 +1,9 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import path from 'path'
-import { createContainer, TYPES } from '@spyglass/core'
-import type { IIndexer } from '@spyglass/core'
-import type { IndexingProgress } from '@spyglass/shared'
+import { createContainer, TYPES } from '@pathseekr/core'
+import type { IIndexer } from '@pathseekr/core'
+import type { IndexingProgress } from '@pathseekr/shared'
 import { config } from '../config'
 import { formatDuration } from '../ui/progress'
 
@@ -28,7 +28,7 @@ export const indexCommand = new Command('index')
         const absolutePath = path.resolve(inputPath)
 
         console.log(
-            `\n${chalk.bold('Spyglass')} ${chalk.dim('—')} ` +
+            `\n${chalk.bold('Pathseekr')} ${chalk.dim('—')} ` +
             `indexing ${chalk.cyan(absolutePath)}\n`
         )
 
@@ -153,7 +153,7 @@ export const indexCommand = new Command('index')
 
             if (options.skipEmbedding) {
                 console.log()
-                stepSkipped('Embeddings', 'skipped — run spyglass embed for hybrid search')
+                stepSkipped('Embeddings', 'skipped — run pathseekr embed for hybrid search')
             } else {
                 stepDone(
                     'Embeddings',

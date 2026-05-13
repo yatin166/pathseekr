@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify'
-import type { Chunk, StoredChunk } from '@spyglass/shared'
+import type { Chunk, StoredChunk } from '@pathseekr/shared'
 import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
 import { DatabaseConnection } from './database'
 import { TYPES } from '../container/types'

@@ -1,4 +1,4 @@
-import type { RetrievalResult, RetrievalStrategy } from '@spyglass/shared'
+import type { RetrievalResult, RetrievalStrategy } from '@pathseekr/shared'
 import { RawChunkWithDocument } from "./retrieval-queries";
 
 

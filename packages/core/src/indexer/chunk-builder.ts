@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { injectable } from 'inversify'
 import { randomUUID } from 'crypto'
-import type { Chunk } from '@spyglass/shared'
+import type { Chunk } from '@pathseekr/shared'
 import type { ParseResult } from '../interfaces/document-parser.interface'
 
 @injectable()

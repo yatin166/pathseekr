@@ -1,4 +1,4 @@
-import type { Chunk, StoredChunk } from '@spyglass/shared'
+import type { Chunk, StoredChunk } from '@pathseekr/shared'
 
 export interface IChunkRepository {
     save(chunk: Chunk): Promise<void>;

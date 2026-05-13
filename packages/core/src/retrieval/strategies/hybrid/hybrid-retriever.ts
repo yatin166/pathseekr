@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
-import type { RetrievalResult, SearchQuery, SpyglassConfig } from '@spyglass/shared'
+import type { RetrievalResult, SearchQuery, PathseekrConfig } from '@pathseekr/shared'
 import type { IRetriever } from '../../../interfaces/retriever.interface'
 import { TYPES } from '../../../container/types'
 import { BM25Retriever } from '../bm25/bm25-retriever'
@@ -18,8 +18,8 @@ export class HybridRetriever implements IRetriever {
         @inject(TYPES.VectorRetriever)
         private readonly vectorRetriever: VectorRetriever,
 
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig
     ) {}
 
     async isReady(): Promise<boolean> {

@@ -2,14 +2,14 @@ import 'reflect-metadata'
 import { z } from 'zod'
 import dotenv from 'dotenv'
 import path from 'path'
-import type { SpyglassConfig } from '@spyglass/shared'
+import type { PathseekrConfig } from '@pathseekr/shared'
 
 dotenv.config({ path: path.join(process.cwd(), '.env') })
 
 dotenv.config({
     path: path.join(
         process.env['HOME'] ?? process.env['USERPROFILE'] ?? '.',
-        '.spyglass',
+        '.pathseekr',
         '.env'
     ),
     override: false,
@@ -25,9 +25,9 @@ const envSchema = z.object({
     OLLAMA_LLM_MODEL: z
         .string()
         .default('gemma3:8b'),
-    SPYGLASS_DATA_DIR: z
+    PATHSEEKR_DATA_DIR: z
         .string()
-        .default('~/.spyglass'),
+        .default('~/.pathseekr'),
     OLLAMA_EMBEDDING_DIMENSIONS: z
         .string()
         .default('768')
@@ -72,7 +72,7 @@ const envSchema = z.object({
         .default('development'),
 })
 
-function buildConfig(): SpyglassConfig {
+function buildConfig(): PathseekrConfig {
     const parsed = envSchema.safeParse(process.env)
 
     if (!parsed.success) {
@@ -99,7 +99,7 @@ function buildConfig(): SpyglassConfig {
             baseUrl: env.OLLAMA_BASE_URL,
         },
         storage: {
-            dataDir: env.SPYGLASS_DATA_DIR,
+            dataDir: env.PATHSEEKR_DATA_DIR,
         },
         indexing: {
             concurrency: env.INDEXING_CONCURRENCY,

@@ -3,7 +3,7 @@ import { injectable, inject } from 'inversify'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import type { Chunk, SpyglassConfig } from '@spyglass/shared'
+import type { Chunk, PathseekrConfig } from '@pathseekr/shared'
 import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
 import { TYPES } from '../container/types'
@@ -14,8 +14,8 @@ export class ProjectMapBuilder {
     private readonly MAP_FILENAME = 'project-map.txt'
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig,
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig,
 
         @inject(TYPES.IDocumentRepository)
         private readonly documentRepository: IDocumentRepository,
@@ -32,7 +32,7 @@ export class ProjectMapBuilder {
         const totalChunks = sorted.reduce((sum, d) => sum + d.chunkCount, 0)
 
         const lines: string[] = [
-            '# Spyglass Project Map',
+            '# Pathseekr Project Map',
             `# Generated: ${new Date().toISOString()}`,
             `# ${sorted.length} files | ${totalChunks} chunks`,
             '',

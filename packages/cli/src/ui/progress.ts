@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import ora, { type Ora } from 'ora'
-import type { IndexingProgress } from '@spyglass/shared'
+import type { IndexingProgress } from '@pathseekr/shared'
 
 export function createSpinner(text: string): Ora {
     return ora({

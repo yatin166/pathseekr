@@ -1,8 +1,8 @@
 {
-  "name": "@spyglass/core",
+  "name": "@pathseekr/core",
   "version": "0.1.0",
   "private": true,
-  "description": "Core engine for Spyglass — parsing, indexing, retrieval",
+  "description": "Core engine for Pathseekr — parsing, indexing, retrieval",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@spyglass/shared": "*",
+    "@pathseekr/shared": "*",
     "better-sqlite3": "^9.4.0",
     "fast-glob": "^3.3.0",
     "inversify": "^6.0.0",

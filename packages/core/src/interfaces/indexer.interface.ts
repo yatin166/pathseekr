@@ -1,4 +1,4 @@
-import type { IngestionJob, IndexingProgress } from '@spyglass/shared'
+import type { IngestionJob, IndexingProgress } from '@pathseekr/shared'
 
 export interface IndexOptions {
     readonly force?: boolean;
