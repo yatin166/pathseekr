@@ -1,30 +1,31 @@
 export const TYPES = {
-    DatabaseConnection: Symbol.for('DatabaseConnection'),
-    PathseekrConfig: Symbol.for('PathseekrConfig'),
+  DatabaseConnection: Symbol.for('DatabaseConnection'),
+  DatabasePath: Symbol.for('DatabasePath'),
+  PathseekrConfig: Symbol.for('PathseekrConfig'),
 
-    IEmbeddingProvider: Symbol.for('IEmbeddingProvider'),
-    ILLMProvider: Symbol.for('ILLMProvider'),
+  IEmbeddingProvider: Symbol.for('IEmbeddingProvider'),
+  ILLMProvider: Symbol.for('ILLMProvider'),
 
-    IChunkRepository: Symbol.for('IChunkRepository'),
-    IDocumentRepository: Symbol.for('IDocumentRepository'),
+  IChunkRepository: Symbol.for('IChunkRepository'),
+  IDocumentRepository: Symbol.for('IDocumentRepository'),
 
-    BM25Retriever: Symbol.for('BM25Retriever'),
-    VectorRetriever: Symbol.for('VectorRetriever'),
-    EmbeddingIndexBuilder: Symbol.for('EmbeddingIndexBuilder'),
-    HybridRetriever: Symbol.for('HybridRetriever'),
-    GraphRetriever: Symbol.for('GraphRetriever'),
+  BM25Retriever: Symbol.for('BM25Retriever'),
+  VectorRetriever: Symbol.for('VectorRetriever'),
+  EmbeddingIndexBuilder: Symbol.for('EmbeddingIndexBuilder'),
+  HybridRetriever: Symbol.for('HybridRetriever'),
+  GraphRetriever: Symbol.for('GraphRetriever'),
 
-    ParserRegistry: Symbol.for('ParserRegistry'),
+  ParserRegistry: Symbol.for('ParserRegistry'),
 
-    IIndexer: Symbol.for('IIndexer'),
-    FileScanner: Symbol.for('FileScanner'),
-    ChecksumService: Symbol.for('ChecksumService'),
-    ChunkBuilder: Symbol.for('ChunkBuilder'),
-    EdgeBuilder: Symbol.for('EdgeBuilder'),
-    ProjectMapBuilder: Symbol.for('ProjectMapBuilder'),
+  IIndexer: Symbol.for('IIndexer'),
+  FileScanner: Symbol.for('FileScanner'),
+  ChecksumService: Symbol.for('ChecksumService'),
+  ChunkBuilder: Symbol.for('ChunkBuilder'),
+  EdgeBuilder: Symbol.for('EdgeBuilder'),
+  ProjectMapBuilder: Symbol.for('ProjectMapBuilder'),
 
-    // Retrieval
-    ITokenizer: Symbol.for('ITokenizer'),
-    BM25IndexBuilder: Symbol.for('BM25IndexBuilder'),
+  // Retrieval
+  ITokenizer: Symbol.for('ITokenizer'),
+  BM25IndexBuilder: Symbol.for('BM25IndexBuilder'),
 
 } as const
