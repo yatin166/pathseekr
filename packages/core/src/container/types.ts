@@ -1,6 +1,6 @@
 export const TYPES = {
     DatabaseConnection: Symbol.for('DatabaseConnection'),
-    SpyglassConfig: Symbol.for('SpyglassConfig'),
+    PathseekrConfig: Symbol.for('PathseekrConfig'),
 
     IEmbeddingProvider: Symbol.for('IEmbeddingProvider'),
     ILLMProvider: Symbol.for('ILLMProvider'),

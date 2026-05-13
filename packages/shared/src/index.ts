@@ -37,5 +37,5 @@ export type {
     IndexingConfig,
     RetrievalConfig,
     ServerConfig,
-    SpyglassConfig,
+    PathseekrConfig,
 } from './types/config'

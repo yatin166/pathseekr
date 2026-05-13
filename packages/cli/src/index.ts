@@ -10,7 +10,7 @@ import { embedCommand } from "./commands/embed";
 const program = new Command()
 
 program
-    .name('spyglass')
+    .name('pathseekr')
     .description('Index your codebase locally and find exactly what you are looking for')
     .version('0.1.0')
 

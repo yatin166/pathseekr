@@ -1,9 +1,9 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import path from 'path'
-import { createContainer, IRetriever, TYPES } from '@spyglass/core'
+import { createContainer, IRetriever, TYPES } from '@pathseekr/core'
 import { config } from '../config'
-import {RetrievalStrategy} from "@spyglass/shared";
+import {RetrievalStrategy} from "@pathseekr/shared";
 
 const getRetriever = (strategy: RetrievalStrategy): IRetriever => {
     const container = createContainer(config)
@@ -38,13 +38,13 @@ export const searchCommand = new Command('search')
         const limit = parseInt(options.limit as string, 10)
         const strategy = options.strategy as RetrievalStrategy
 
-        console.log(`\n${chalk.bold('Spyglass')} ${chalk.dim('—')} searching for ${chalk.cyan(`"${query}"`)} using ${chalk.cyan(`"${strategy}"`)} strategy\n`)
+        console.log(`\n${chalk.bold('Pathseekr')} ${chalk.dim('—')} searching for ${chalk.cyan(`"${query}"`)} using ${chalk.cyan(`"${strategy}"`)} strategy\n`)
 
         const retriever = getRetriever(strategy)
 
         const ready = await retriever.isReady()
         if (!ready) {
-            console.log(chalk.yellow('  No search index found. Run: spyglass index <path>\n'))
+            console.log(chalk.yellow('  No search index found. Run: pathseekr index <path>\n'))
             return
         }
 

@@ -1,4 +1,4 @@
-import type { Chunk, Document, DocumentSummary, StoredChunk } from '@spyglass/shared'
+import type { Chunk, Document, DocumentSummary, StoredChunk } from '@pathseekr/shared'
 import type { RawChunk, RawChunkWithEmbedding, RawDocument, RawDocumentSummary } from './schema'
 
 // Document mappers

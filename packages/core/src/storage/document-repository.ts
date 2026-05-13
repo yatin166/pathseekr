@@ -1,5 +1,5 @@
 import { injectable, inject } from 'inversify'
-import type { Document, DocumentSummary, IndexStats } from '@spyglass/shared'
+import type { Document, DocumentSummary, IndexStats } from '@pathseekr/shared'
 import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import { DatabaseConnection } from './database'
 import { TYPES } from '../container/types'

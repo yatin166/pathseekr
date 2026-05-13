@@ -1,7 +1,7 @@
 import type { UserConfig } from '@commitlint/types'
 
 const VALID_TYPES  = ['feat', 'fix', 'refactor', 'chore', 'test', 'docs']
-const VALID_SCOPES = ['shared', 'core', 'cli', 'mcp', 'api', 'web', 'config', 'deps']
+const VALID_SCOPES = ['shared', 'core', 'cli', 'mcp', 'api', 'web', 'config', 'deps', 'pathseekr']
 
 const HELP_MESSAGE = `
   Commit messages must follow this format:
@@ -17,7 +17,7 @@ const config: UserConfig = {
     plugins: [
         {
             rules: {
-                'spyglass-format': ({ type, scope, subject }) => {
+                'pathseekr-format': ({ type, scope, subject }) => {
                     const validType    = Boolean(type && VALID_TYPES.includes(type))
                     const validScope   = Boolean(scope && VALID_SCOPES.includes(scope))
                     const hasSubject   = Boolean(subject?.trim())
@@ -28,7 +28,7 @@ const config: UserConfig = {
         },
     ],
     rules: {
-        'spyglass-format': [2, 'always'],
+        'pathseekr-format': [2, 'always'],
     },
 }
 

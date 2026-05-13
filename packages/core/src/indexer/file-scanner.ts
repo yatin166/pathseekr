@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import * as fs from 'fs'
 import * as path from 'path'
-import type { SpyglassConfig } from '@spyglass/shared'
+import type { PathseekrConfig } from '@pathseekr/shared'
 import { TYPES } from '../container/types'
 
 
@@ -113,8 +113,8 @@ export class FileScanner {
     private readonly extraIgnoredPatterns: string[]
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig
     ) {
         this.maxFileSizeBytes = this.config.indexing.maxFileSizeBytes
         this.extraIgnoredPatterns = this.config.indexing.excludePatterns

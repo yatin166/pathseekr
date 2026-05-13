@@ -3,7 +3,7 @@ import Database from 'better-sqlite3'
 import { injectable, inject } from 'inversify'
 import fs from 'fs'
 import path from 'path'
-import type { SpyglassConfig } from '@spyglass/shared'
+import type { PathseekrConfig } from '@pathseekr/shared'
 import { TYPES } from '../container/types'
 import { Tables } from './schema'
 
@@ -12,8 +12,8 @@ export class DatabaseConnection {
     private db: Database.Database | null = null
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig
     ) {}
 
     getDb(): Database.Database {
@@ -24,7 +24,7 @@ export class DatabaseConnection {
         const dataDir = this.resolveDataDir()
         fs.mkdirSync(dataDir, { recursive: true })
 
-        const dbPath = path.join(dataDir, 'spyglass.db')
+        const dbPath = path.join(dataDir, 'pathseekr.db')
         this.db = new Database(dbPath)
 
         this.applyPragmas(this.db)

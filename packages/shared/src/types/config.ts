@@ -33,7 +33,7 @@ export interface ServerConfig {
     readonly webPort: number;
 }
 
-export interface SpyglassConfig {
+export interface PathseekrConfig {
     readonly embedding: EmbeddingConfig;
     readonly llm: LLMConfig;
     readonly storage: StorageConfig;

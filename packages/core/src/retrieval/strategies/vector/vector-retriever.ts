@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
-import type {RetrievalResult, SearchQuery, SpyglassConfig} from '@spyglass/shared'
+import type {RetrievalResult, SearchQuery, PathseekrConfig} from '@pathseekr/shared'
 import type { IRetriever } from '../../../interfaces/retriever.interface'
 import type { IEmbeddingProvider } from '../../../interfaces/embedding-provider.interface'
 import { DatabaseConnection } from '../../../storage/database'
@@ -14,8 +14,8 @@ import { type RawChunkWithDocument, RetrievalQueries } from "../../shared/retrie
 export class VectorRetriever implements IRetriever {
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig,
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig,
 
         @inject(TYPES.DatabaseConnection)
         private readonly connection: DatabaseConnection,
@@ -132,7 +132,7 @@ export class VectorRetriever implements IRetriever {
                 `Embedding dimension mismatch. ` +
                 `Stored: ${storedDimensions}, ` +
                 `Configured: ${configuredDimensions}. ` +
-                `Delete ~/.spyglass/spyglass.db and re-index.`
+                `Delete ~/.pathseekr/pathseekr.db and re-index.`
             )
         }
 

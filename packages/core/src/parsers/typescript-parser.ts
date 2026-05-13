@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { injectable } from 'inversify'
 const TSLanguage = require('tree-sitter-typescript').typescript
-import type { Language } from '@spyglass/shared'
+import type { Language } from '@pathseekr/shared'
 import {
     BaseParser,
     ClassDeclaration,

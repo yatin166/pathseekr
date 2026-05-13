@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 const PythonLanguage = require('tree-sitter-python')
-import type { Language } from '@spyglass/shared'
+import type { Language } from '@pathseekr/shared'
 import {
     BaseParser,
     ClassDeclaration,

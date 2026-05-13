@@ -6,7 +6,7 @@ import { DatabaseConnection } from '../../../storage/database'
 import { TYPES } from '../../../container/types'
 import { VectorQueries } from './vector-queries'
 import { embeddingToBuffer } from '../../../storage/mappers'
-import { Chunk } from "@spyglass/shared";
+import { Chunk } from "@pathseekr/shared";
 
 export interface EmbeddingProgress {
     readonly total: number

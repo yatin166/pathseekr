@@ -1,4 +1,4 @@
-import type { Chunk, Language } from '@spyglass/shared'
+import type { Chunk, Language } from '@pathseekr/shared'
 
 export interface ParseResult {
     readonly chunks: Chunk[];

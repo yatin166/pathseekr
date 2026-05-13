@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import { Ollama } from 'ollama'
 import type { IEmbeddingProvider, EmbeddingResult } from '../../interfaces/embedding-provider.interface'
-import type { SpyglassConfig } from '@spyglass/shared'
+import type { PathseekrConfig } from '@pathseekr/shared'
 import { TYPES } from '../../container/types'
 
 @injectable()
@@ -13,8 +13,8 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
     readonly dimensions: number
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig
     ) {
         this.client = new Ollama({
             host: config.embedding.baseUrl,

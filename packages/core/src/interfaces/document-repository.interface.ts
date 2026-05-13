@@ -1,4 +1,4 @@
-import type { Document, DocumentSummary, IndexStats } from '@spyglass/shared'
+import type { Document, DocumentSummary, IndexStats } from '@pathseekr/shared'
 
 export interface IDocumentRepository {
     save(document: Document): Promise<void>;

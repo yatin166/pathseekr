@@ -8,8 +8,8 @@ import type {
     IndexingProgress,
     IndexingPhase,
     JobStatus,
-    SpyglassConfig,
-} from '@spyglass/shared'
+    PathseekrConfig,
+} from '@pathseekr/shared'
 import type { IIndexer, IndexOptions } from '../interfaces/indexer.interface'
 import type { IDocumentRepository } from '../interfaces/document-repository.interface'
 import type { IChunkRepository } from '../interfaces/chunk-repository.interface'
@@ -32,8 +32,8 @@ interface ParseFileResult {
 export class CodebaseIndexer implements IIndexer {
 
     constructor(
-        @inject(TYPES.SpyglassConfig)
-        private readonly config: SpyglassConfig,
+        @inject(TYPES.PathseekrConfig)
+        private readonly config: PathseekrConfig,
 
         @inject(TYPES.IDocumentRepository)
         private readonly documentRepository: IDocumentRepository,

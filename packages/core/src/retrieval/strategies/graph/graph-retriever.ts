@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import Database from 'better-sqlite3'
-import type { RetrievalResult, SearchQuery } from '@spyglass/shared'
+import type { RetrievalResult, SearchQuery } from '@pathseekr/shared'
 import type { IRetriever } from '../../../interfaces/retriever.interface'
 import { DatabaseConnection } from '../../../storage/database'
 import { TYPES } from '../../../container/types'

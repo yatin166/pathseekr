@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import Parser from 'tree-sitter'
 import { injectable } from 'inversify'
 import { randomUUID } from 'crypto'
-import type { Chunk, ChunkMetadata, ChunkType, Language } from '@spyglass/shared'
+import type { Chunk, ChunkMetadata, ChunkType, Language } from '@pathseekr/shared'
 import type { IDocumentParser, ParseResult } from '../../interfaces/document-parser.interface'
 
 export type TreeSitterLanguage = Parameters<Parser['setLanguage']>[0]
