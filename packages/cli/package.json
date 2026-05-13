@@ -5,7 +5,8 @@
   "description": "CLI for Pathseekr — index and search your codebase",
   "license": "MIT",
   "bin": {
-    "pathseekr": "./dist/index.js"
+    "pathseekr": "./dist/index.js",
+    "seek": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
