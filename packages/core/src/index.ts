@@ -1,5 +1,6 @@
 export { createContainer } from './container/container'
 export { TYPES } from './container/types'
+export { WorkspaceManager } from './workspace/workspace-manager'
 
 export type { IDocumentParser, ParseResult } from './interfaces/document-parser.interface'
 export type { IEmbeddingProvider, EmbeddingResult } from './interfaces/embedding-provider.interface'
