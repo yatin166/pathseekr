@@ -41,6 +41,6 @@ export type {
 } from './types/config'
 
 export type {
-  Workspace,
-  WorkspaceStore,
-} from './types/workspace'
+  Context,
+  ContextStore,
+} from './types/context'

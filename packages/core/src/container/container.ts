@@ -30,7 +30,7 @@ import { GraphRetriever } from '../retrieval/strategies/graph/graph-retriever'
  * Creates and configures the dependency injection container.
  *
  * @param config - Application configuration
- * @param dbPath - Database path for the current workspace
+ * @param dbPath - Database path for the current context
  */
 export function createContainer(config: PathseekrConfig, dbPath: string): Container {
   const container = new Container({ defaultScope: 'Singleton' })

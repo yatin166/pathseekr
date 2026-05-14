@@ -6,7 +6,7 @@ import { indexCommand } from './commands/index'
 import { statusCommand } from './commands/status'
 import { searchCommand } from './commands/search'
 import { embedCommand } from './commands/embed'
-import { workspaceCommand } from './commands/workspace'
+import { contextCommand } from './commands/context'
 
 const program = new Command()
 
@@ -19,6 +19,6 @@ program.addCommand(indexCommand)
 program.addCommand(statusCommand)
 program.addCommand(searchCommand)
 program.addCommand(embedCommand)
-program.addCommand(workspaceCommand)
+program.addCommand(contextCommand)
 
 program.parse(process.argv)

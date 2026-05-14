@@ -3,9 +3,9 @@ import path from 'path'
 import os from 'os'
 import type { Context, ContextStore } from '@pathseekr/shared'
 
-const WORKSPACES_FILE = 'contexts.json'
-const WORKSPACES_DIR = 'contexts'
-const WORKSPACE_NAME_PATTERN = /^[a-z0-9_-]+$/
+const CONTEXTS_FILE = 'contexts.json'
+const CONTEXTS_DIR = 'contexts'
+const CONTEXT_NAME_PATTERN = /^[a-z0-9_-]+$/
 
 /**
  * Manages context definitions stored in ~/.pathseekr/contexts.json.
@@ -25,8 +25,8 @@ export class ContextManager {
 
   constructor(dataDir: string) {
     const resolved = this.resolveDir(dataDir)
-    this.storeFile = path.join(resolved, WORKSPACES_FILE)
-    this.contextsDir = path.join(resolved, WORKSPACES_DIR)
+    this.storeFile = path.join(resolved, CONTEXTS_FILE)
+    this.contextsDir = path.join(resolved, CONTEXTS_DIR)
   }
 
   create(name: string, description?: string): Context {
@@ -216,7 +216,7 @@ export class ContextManager {
       throw new Error('Context name cannot be empty.')
     }
 
-    if (!WORKSPACE_NAME_PATTERN.test(name)) {
+    if (!CONTEXT_NAME_PATTERN.test(name)) {
       throw new Error(
         `Context name "${name}" is invalid. ` +
         `Use only lowercase letters, numbers, underscores and hyphens.`

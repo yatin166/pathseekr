@@ -3,18 +3,18 @@ import chalk from 'chalk'
 import { createContainer, TYPES } from '@pathseekr/core'
 import type { IDocumentRepository } from '@pathseekr/core'
 import { config } from '../config'
-import { resolveDbPath, workspaceLabel } from '../workspace'
+import { resolveDbPath, contextLabel } from '../context'
 import { renderStatsTable, renderLanguageTable } from '../ui/table'
 import { formatBytes } from '../ui/format'
 
 export const statusCommand = new Command('status')
   .description('Show indexing statistics')
-  .option('-w, --workspace <name>', 'Workspace to show status for')
+  .option('-w, --context <name>', 'Context to show status for')
   .action(async (options) => {
     try {
-      const workspaceName = options.workspace as string | undefined
-      const dbPath = resolveDbPath(workspaceName, config)
-      const label = workspaceLabel(workspaceName, config)
+      const contextName = options.context as string | undefined
+      const dbPath = resolveDbPath(contextName, config)
+      const label = contextLabel(contextName, config)
 
       const container = createContainer(config, dbPath)
       const documentRepository = container.get<IDocumentRepository>(TYPES.IDocumentRepository)

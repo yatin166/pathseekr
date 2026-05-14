@@ -1,4 +1,4 @@
-export interface Contexte {
+export interface Context {
   readonly name: string
   readonly description?: string
   readonly paths: string[]
@@ -7,7 +7,7 @@ export interface Contexte {
   readonly updatedAt: string
 }
 
-export interface ContexteStore {
-  readonly activeContexte?: string
-  readonly contextes: Record<string, Contexte>
+export interface ContextStore {
+  readonly activeContext?: string
+  readonly contexts: Record<string, Context>
 }

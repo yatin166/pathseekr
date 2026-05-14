@@ -1,28 +1,28 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import path from 'path'
-import { createContainer, TYPES, WorkspaceManager } from '@pathseekr/core'
+import { createContainer, TYPES, ContextManager } from '@pathseekr/core'
 import type { IIndexer } from '@pathseekr/core'
 import type { IndexingProgress } from '@pathseekr/shared'
 import { config } from '../config'
-import { resolveDbPath, workspaceLabel } from '../workspace'
+import { resolveDbPath, contextLabel } from '../context'
 import { formatDuration } from '../ui/progress'
 import { formatBytes } from '../ui/format'
 
 export const indexCommand = new Command('index')
-  .description('Index a directory or all paths in a workspace')
-  .argument('[path]', 'Path to index (optional when using a workspace)')
-  .option('-w, --workspace <name>', 'Workspace to index into')
+  .description('Index a directory or all paths in a context')
+  .argument('[path]', 'Path to index (optional when using a context)')
+  .option('-w, --context <name>', 'Context to index into')
   .option('-f, --force', 'Force re-index even if files have not changed', false)
   .option('--skip-embedding', 'Skip embedding generation — only BM25 and graph search available', true)
   .action(async (inputPath: string | undefined, options) => {
     try {
-      const workspaceName = options.workspace as string | undefined
-      const dbPath = resolveDbPath(workspaceName, config)
-      const label = workspaceLabel(workspaceName, config)
+      const contextName = options.context as string | undefined
+      const dbPath = resolveDbPath(contextName, config)
+      const label = contextLabel(contextName, config)
 
       // Resolve which paths to index
-      const pathsToIndex = resolveIndexPaths(inputPath, workspaceName)
+      const pathsToIndex = resolveIndexPaths(inputPath, contextName)
 
       console.log(
         `\n${chalk.bold('Pathseekr')} ${chalk.dim('—')} ` +
@@ -45,32 +45,53 @@ export const indexCommand = new Command('index')
 
 function resolveIndexPaths(
   inputPath: string | undefined,
-  workspaceName: string | undefined
+  contextName: string | undefined
 ): string[] {
+  const manager = new ContextManager(config.storage.dataDir)
+
   if (inputPath) {
-    return [path.resolve(inputPath)]
+    const resolved = path.resolve(inputPath)
+
+    // Determine which context to register the path in —
+    // either the explicit --context flag or the active context
+    const targetContextName = contextName ?? manager.getActive()?.name
+
+    if (targetContextName) {
+      const context = manager.get(targetContextName)
+
+      if (!context) {
+        throw new Error(
+          `Context "${targetContextName}" not found.\n` +
+          `  Run: seek context list`
+        )
+      }
+
+      if (!context.paths.includes(resolved)) {
+        manager.addPath(targetContextName, resolved)
+      }
+    }
+
+    return [resolved]
   }
 
-  const manager = new WorkspaceManager(config.storage.dataDir)
+  if (contextName) {
+    const context = manager.get(contextName)
 
-  if (workspaceName) {
-    const workspace = manager.get(workspaceName)
-
-    if (!workspace) {
+    if (!context) {
       throw new Error(
-        `Workspace "${workspaceName}" not found.\n` +
-        `  Run: seek workspace list`
+        `Context "${contextName}" not found.\n` +
+        `  Run: seek context list`
       )
     }
 
-    if (workspace.paths.length === 0) {
+    if (context.paths.length === 0) {
       throw new Error(
-        `Workspace "${workspaceName}" has no paths registered.\n` +
-        `  Add a path: seek workspace add ${workspaceName} /path/to/project`
+        `Context "${contextName}" has no paths registered.\n` +
+        `  Add a path: seek context add ${contextName} /path/to/project`
       )
     }
 
-    return workspace.paths
+    return context.paths
   }
 
   const active = manager.getActive()
@@ -78,8 +99,8 @@ function resolveIndexPaths(
   if (active) {
     if (active.paths.length === 0) {
       throw new Error(
-        `Active workspace "${active.name}" has no paths registered.\n` +
-        `  Add a path: seek workspace add ${active.name} /path/to/project`
+        `Active context "${active.name}" has no paths registered.\n` +
+        `  Add a path: seek context add ${active.name} /path/to/project`
       )
     }
 
@@ -87,9 +108,9 @@ function resolveIndexPaths(
   }
 
   throw new Error(
-    'No path provided and no workspace selected.\n\n' +
-    '  Index a specific path:   seek index /path/to/project --workspace <name>\n' +
-    '  Or set active workspace: seek workspace use <name>'
+    'No path provided and no context selected.\n\n' +
+    '  Index a specific path:   seek index /path/to/project --context <name>\n' +
+    '  Or set active context: seek context use <name>'
   )
 }
 
