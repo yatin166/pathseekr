@@ -1,4 +1,4 @@
-export interface Workspace {
+export interface Context {
   readonly name: string
   readonly description?: string
   readonly paths: string[]
@@ -7,7 +7,7 @@ export interface Workspace {
   readonly updatedAt: string
 }
 
-export interface WorkspaceStore {
-  readonly activeWorkspace?: string
-  readonly workspaces: Record<string, Workspace>
+export interface ContextStore {
+  readonly activeContext?: string
+  readonly contexts: Record<string, Context>
 }

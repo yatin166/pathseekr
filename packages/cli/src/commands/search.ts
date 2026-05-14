@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import path from 'path'
 import { createContainer, IRetriever, TYPES } from '@pathseekr/core'
 import { config } from '../config'
-import { resolveDbPath, workspaceLabel } from '../workspace'
+import { resolveDbPath, contextLabel } from '../context'
 import type { RetrievalStrategy } from '@pathseekr/shared'
 
 const getRetriever = (strategy: RetrievalStrategy, dbPath: string): IRetriever => {
@@ -33,12 +33,12 @@ export const searchCommand = new Command('search')
   .argument('<query>', 'What to search for')
   .option('-n, --limit <number>', 'Number of results to return', '5')
   .option('-s, --strategy <strategy>', 'Retrieval strategy: graph, bm25, vector, hybrid', 'graph')
-  .option('-w, --workspace <name>', 'Workspace to search in')
+  .option('-w, --context <name>', 'Context to search in')
   .action(async (query: string, options) => {
     try {
-      const workspaceName = options.workspace as string | undefined
-      const dbPath = resolveDbPath(workspaceName, config)
-      const label = workspaceLabel(workspaceName, config)
+      const contextName = options.context as string | undefined
+      const dbPath = resolveDbPath(contextName, config)
+      const label = contextLabel(contextName, config)
       const limit = parseInt(options.limit as string, 10)
       const strategy = options.strategy as RetrievalStrategy
 
