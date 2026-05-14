@@ -18,6 +18,8 @@ export interface ScanResult {
     readonly totalScanned: number
     readonly skippedCount: number
     readonly skippedReasons: Record<string, number>
+    readonly skippedExtensions: string[]
+    readonly skippedDirectories: string[]
 }
 
 const IGNORED_DIRECTORIES = new Set([
@@ -130,17 +132,23 @@ export class FileScanner {
         const stat = fs.statSync(absolutePath)
         const files: ScannedFile[] = []
         const skippedReasons: Record<string, number> = {}
+        const skippedExtensions = new Set<string>()
+        const skippedDirectories = new Set<string>()
         let totalScanned = 0
 
         if (stat.isFile()) {
             totalScanned = 1
-            const result = this.processFile(absolutePath, absolutePath, stat)
+            const result = this.processFile(
+              absolutePath,
+              absolutePath,
+              stat,
+              skippedExtensions
+            )
 
             if (result.file) {
                 files.push(result.file)
             } else if (result.reason) {
-                skippedReasons[result.reason] =
-                    (skippedReasons[result.reason] ?? 0) + 1
+                skippedReasons[result.reason] = (skippedReasons[result.reason] ?? 0) + 1
             }
         } else if (stat.isDirectory()) {
             this.walkDirectory(
@@ -148,9 +156,9 @@ export class FileScanner {
                 absolutePath,
                 files,
                 skippedReasons,
-                (count) => {
-                    totalScanned += count
-                }
+                skippedExtensions,
+                skippedDirectories,
+                (count) => { totalScanned += count }
             )
         }
 
@@ -159,6 +167,8 @@ export class FileScanner {
             totalScanned,
             skippedCount: totalScanned - files.length,
             skippedReasons,
+            skippedExtensions: [...skippedExtensions].sort(),
+            skippedDirectories: [...skippedDirectories].sort(),
         }
     }
 
@@ -167,6 +177,8 @@ export class FileScanner {
         rootPath: string,
         files: ScannedFile[],
         skippedReasons: Record<string, number>,
+        skippedExtensions: Set<string>,
+        skippedDirectories: Set<string>,
         onScanned: (count: number) => void
     ): void {
         let entries: fs.Dirent[]
@@ -183,8 +195,8 @@ export class FileScanner {
 
             if (entry.isDirectory()) {
                 if (this.shouldSkipDirectory(entry.name)) {
-                    skippedReasons['ignored_directory'] =
-                        (skippedReasons['ignored_directory'] ?? 0) + 1
+                    skippedDirectories.add(entry.name)
+                    skippedReasons['ignored_directory'] = (skippedReasons['ignored_directory'] ?? 0) + 1
                     continue
                 }
                 this.walkDirectory(
@@ -192,12 +204,16 @@ export class FileScanner {
                     rootPath,
                     files,
                     skippedReasons,
+                    skippedExtensions,
+                    skippedDirectories,
                     onScanned
                 )
                 continue
             }
 
-            if (!entry.isFile()) continue
+            if (!entry.isFile()) {
+                continue
+            }
 
             onScanned(1)
 
@@ -205,17 +221,16 @@ export class FileScanner {
             try {
                 stat = fs.statSync(entryPath)
             } catch {
-                skippedReasons['stat_error'] =
-                    (skippedReasons['stat_error'] ?? 0) + 1
+                skippedReasons['stat_error'] = (skippedReasons['stat_error'] ?? 0) + 1
                 continue
             }
 
-            const result = this.processFile(entryPath, rootPath, stat)
+            const result = this.processFile(entryPath, rootPath, stat, skippedExtensions)
+
             if (result.file) {
                 files.push(result.file)
             } else if (result.reason) {
-                skippedReasons[result.reason] =
-                    (skippedReasons[result.reason] ?? 0) + 1
+                skippedReasons[result.reason] = (skippedReasons[result.reason] ?? 0) + 1
             }
         }
     }
@@ -223,7 +238,8 @@ export class FileScanner {
     private processFile(
         absolutePath: string,
         rootPath: string,
-        stat: fs.Stats
+        stat: fs.Stats,
+        skippedExtensions: Set<string>   // ← add parameter
     ): { file?: ScannedFile; reason?: string } {
         const fileName = path.basename(absolutePath)
         const extension = this.getExtension(absolutePath)
@@ -233,10 +249,12 @@ export class FileScanner {
         }
 
         if (IGNORED_EXTENSIONS.has(extension)) {
+            skippedExtensions.add(extension)
             return { reason: 'ignored_extension' }
         }
 
         if (absolutePath.endsWith('.d.ts')) {
+            skippedExtensions.add('.d.ts')
             return { reason: 'declaration_file' }
         }
 
