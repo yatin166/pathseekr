@@ -3,7 +3,15 @@ import chalk from 'chalk'
 import { WorkspaceManager } from '@pathseekr/core'
 import type { Workspace } from '@pathseekr/shared'
 import { config } from '../config'
+import * as path from 'path'
+import * as fs from 'node:fs'
 
+
+function resolveProjectMapPath(dbPath: string): string {
+  const dir = path.dirname(dbPath)
+  const baseName = path.basename(dbPath, '.db')
+  return path.join(dir, `${baseName}-project-map.txt`)
+}
 
 function getManager(): WorkspaceManager {
   return new WorkspaceManager(config.storage.dataDir)
@@ -136,7 +144,7 @@ const useCommand = new Command('use')
   })
 
 const deleteCommand = new Command('delete')
-  .description('Delete a workspace (does not delete the indexed data)')
+  .description('Delete a workspace and all its indexed data')
   .argument('<name>', 'Workspace name')
   .option('--confirm', 'Skip confirmation prompt')
   .action((name: string, options) => {
@@ -151,14 +159,29 @@ const deleteCommand = new Command('delete')
       }
 
       if (!options.confirm) {
-        console.log(`\n${chalk.yellow('!')} This will remove the workspace definition.`)
-        console.log(`  Database file is NOT deleted: ${workspace.database}`)
-        console.log(`  Re-run with ${chalk.cyan('--confirm')} to proceed.\n`)
+        console.log(`\n${chalk.yellow('!')} This will permanently delete:`)
+        console.log(`    Database:    ${workspace.database}`)
+        console.log(`    Project map: ${resolveProjectMapPath(workspace.database)}`)
+        console.log(`\n  Re-run with ${chalk.cyan('--confirm')} to proceed.\n`)
         return
       }
 
+      // Remove database file
+      if (fs.existsSync(workspace.database)) {
+        fs.unlinkSync(workspace.database)
+      }
+
+      // Remove project map file
+      const projectMapPath = resolveProjectMapPath(workspace.database)
+      if (fs.existsSync(projectMapPath)) {
+        fs.unlinkSync(projectMapPath)
+      }
+
+      // Remove workspace entry from workspaces.json
       manager.delete(name)
-      console.log(`\n${chalk.green('✓')} Workspace ${chalk.bold(name)} deleted\n`)
+
+      console.log(`\n${chalk.green('✓')} Workspace ${chalk.bold(name)} and all its data deleted\n`)
+
     } catch (err) {
       console.error(`\n${chalk.red('✗')} ${err instanceof Error ? err.message : String(err)}\n`)
       process.exit(1)
