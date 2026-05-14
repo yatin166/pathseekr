@@ -198,10 +198,7 @@ export class JavaScriptParser extends BaseParser {
         }
 
         // Extract extends clause if present
-        const extendsNode = this.getChildByField(node, 'extends')
-        const extendsClause = extendsNode
-            ? this.getNodeText(extendsNode, content).trim()
-            : undefined
+        const extendsClause = this.findExtendsClause(node, content)
 
         const declaration: ClassDeclaration = {
             name,
@@ -376,5 +373,19 @@ export class JavaScriptParser extends BaseParser {
             if (child && child.isNamed) return child
         }
         return node
+    }
+
+    private findExtendsClause(node: Parser.SyntaxNode, content: string): string | undefined {
+        for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i)
+            if (child?.type === 'class_heritage') {
+                const valueNode =
+                    child.childForFieldName('value') ?? child.namedChild(0)
+                if (valueNode) {
+                    return this.getNodeText(valueNode, content).trim()
+                }
+            }
+        }
+        return undefined
     }
 }
