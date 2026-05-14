@@ -47,39 +47,39 @@ function resolveIndexPaths(
   inputPath: string | undefined,
   workspaceName: string | undefined
 ): string[] {
-  // Explicit path always takes precedence
   if (inputPath) {
     return [path.resolve(inputPath)]
   }
 
-  // Workspace with registered paths — index all of them
+  const manager = new WorkspaceManager(config.storage.dataDir)
+
   if (workspaceName) {
-    const manager = new WorkspaceManager(config.storage.dataDir)
     const workspace = manager.get(workspaceName)
 
     if (!workspace) {
-      throw new Error(`Workspace "${workspaceName}" not found. Run: seek workspace list`)
+      throw new Error(
+        `Workspace "${workspaceName}" not found.\n` +
+        `  Run: seek workspace list`
+      )
     }
 
     if (workspace.paths.length === 0) {
       throw new Error(
         `Workspace "${workspaceName}" has no paths registered.\n` +
-        `  Add a path first: seek workspace add ${workspaceName} /path/to/project`
+        `  Add a path: seek workspace add ${workspaceName} /path/to/project`
       )
     }
 
     return workspace.paths
   }
 
-  // Active workspace
-  const manager = new WorkspaceManager(config.storage.dataDir)
   const active = manager.getActive()
 
   if (active) {
     if (active.paths.length === 0) {
       throw new Error(
         `Active workspace "${active.name}" has no paths registered.\n` +
-        `  Add a path first: seek workspace add ${active.name} /path/to/project`
+        `  Add a path: seek workspace add ${active.name} /path/to/project`
       )
     }
 
@@ -87,9 +87,9 @@ function resolveIndexPaths(
   }
 
   throw new Error(
-    'No path provided and no active workspace set.\n' +
-    '  Provide a path:          seek index /path/to/project\n' +
-    '  Or create a workspace:   seek workspace create my_project'
+    'No path provided and no workspace selected.\n\n' +
+    '  Index a specific path:   seek index /path/to/project --workspace <name>\n' +
+    '  Or set active workspace: seek workspace use <name>'
   )
 }
 

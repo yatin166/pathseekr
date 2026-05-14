@@ -1,7 +1,5 @@
 import 'reflect-metadata'
 import { Container } from 'inversify'
-import path from 'path'
-import os from 'os'
 import type { PathseekrConfig } from '@pathseekr/shared'
 import { TYPES } from './types'
 import { DatabaseConnection } from '../storage/database'
@@ -32,26 +30,18 @@ import { GraphRetriever } from '../retrieval/strategies/graph/graph-retriever'
  * Creates and configures the dependency injection container.
  *
  * @param config - Application configuration
- * @param dbPath - Optional resolved database path. When provided (workspace
- *   mode) this overrides the default database location derived from config.
- *   When omitted, the default ~/.pathseekr/pathseekr.db is used.
+ * @param dbPath - Database path for the current workspace
  */
-export function createContainer(config: PathseekrConfig, dbPath?: string): Container {
+export function createContainer(config: PathseekrConfig, dbPath: string): Container {
   const container = new Container({ defaultScope: 'Singleton' })
 
   container
     .bind<PathseekrConfig>(TYPES.PathseekrConfig)
     .toConstantValue(config)
 
-  /**
-   * Resolved once here so DatabaseConnection has no path resolution logic.
-   * All callers go through this single resolution point.
-   */
-  const resolvedDbPath = dbPath ?? resolveDefaultDbPath(config)
-
   container
     .bind<string>(TYPES.DatabasePath)
-    .toConstantValue(resolvedDbPath)
+    .toConstantValue(dbPath)
 
   // Infrastructure
   container
@@ -134,18 +124,4 @@ export function createContainer(config: PathseekrConfig, dbPath?: string): Conta
     .to(HybridRetriever)
 
   return container
-}
-
-/**
- * Resolves the default database path from config when no workspace is active.
- * Handles ~ expansion for cross-platform compatibility.
- */
-function resolveDefaultDbPath(config: PathseekrConfig): string {
-  const dataDir = config.storage.dataDir
-
-  const resolvedDir = dataDir.startsWith('~')
-    ? path.join(os.homedir(), dataDir.slice(1))
-    : dataDir
-
-  return path.join(resolvedDir, 'pathseekr.db')
 }
