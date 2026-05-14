@@ -22,6 +22,9 @@ export interface IngestionJob {
     readonly changedFiles?: number
     readonly unchangedFiles?: number
     readonly skippedReasons?: Record<string, number>
+    readonly skippedExtensions?: string[]
+    readonly skippedDirectories?: string[]
+    readonly unparsableExtensions?: string[]
 }
 
 export interface IndexingProgress {

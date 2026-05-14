@@ -5,6 +5,7 @@ import type { IDocumentRepository } from '@pathseekr/core'
 import { config } from '../config'
 import { resolveDbPath, workspaceLabel } from '../workspace'
 import { renderStatsTable, renderLanguageTable } from '../ui/table'
+import { formatBytes } from '../ui/format'
 
 export const statusCommand = new Command('status')
   .description('Show indexing statistics')
@@ -53,13 +54,3 @@ export const statusCommand = new Command('status')
       process.exit(1)
     }
   })
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`
-  }
-  if (bytes < 1048576) {
-    return `${(bytes / 1024).toFixed(1)} KB`
-  }
-  return `${(bytes / 1048576).toFixed(1)} MB`
-}

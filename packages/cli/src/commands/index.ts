@@ -7,6 +7,7 @@ import type { IndexingProgress } from '@pathseekr/shared'
 import { config } from '../config'
 import { resolveDbPath, workspaceLabel } from '../workspace'
 import { formatDuration } from '../ui/progress'
+import { formatBytes } from '../ui/format'
 
 export const indexCommand = new Command('index')
   .description('Index a directory or all paths in a workspace')
@@ -253,13 +254,51 @@ async function runIndex(
     }
 
     if (job.skippedFiles > 0 && job.skippedReasons) {
-      const sorted = Object.entries(job.skippedReasons).sort(([, a], [, b]) => b - a)
+      const reasons = job.skippedReasons
+      const extensions = job.skippedExtensions ?? []
+      const directories = job.skippedDirectories ?? []
+
       console.log()
       console.log(chalk.dim(`  ${job.skippedFiles} files not indexed:`))
 
-      for (const [reason, count] of sorted) {
-        const label = SKIP_REASON_LABELS[reason] ?? reason
-        console.log(chalk.dim(`    ${String(count).padStart(4)}  ${label}`))
+      const extensionCount = (reasons['ignored_extension'] ?? 0) + (reasons['declaration_file'] ?? 0)
+      if (extensionCount > 0) {
+        console.log(chalk.dim(
+          `  ${String(extensionCount).padStart(6)}  excluded by default     ${formatList(extensions, 8)}`
+        ))
+      }
+
+      if (reasons['hidden_file']) {
+        console.log(chalk.dim(`  ${String(reasons['hidden_file']).padStart(6)}  hidden files`))
+      }
+
+      if (reasons['no_parser']) {
+        const extList = formatList(job.unparsableExtensions ?? [], 8)
+        console.log(chalk.dim(
+          `  ${String(reasons['no_parser']).padStart(6)}  unsupported language    ${extList}`
+        ))
+      }
+
+      if (reasons['too_large']) {
+        console.log(chalk.dim(
+          `  ${String(reasons['too_large']).padStart(6)}  too large               max ${formatBytes(config.indexing.maxFileSizeBytes)}`
+        ))
+      }
+
+      if (reasons['empty_file']) {
+        console.log(chalk.dim(`  ${String(reasons['empty_file']).padStart(6)}  empty files`))
+      }
+
+      if (reasons['exclude_pattern']) {
+        console.log(chalk.dim(`  ${String(reasons['exclude_pattern']).padStart(6)}  matched exclude pattern`))
+      }
+
+      // Directories are not files — shown separately so the counts above add up correctly
+      if (reasons['ignored_directory'] && directories.length > 0) {
+        console.log()
+        console.log(chalk.dim(
+          `  ${reasons['ignored_directory']} directories skipped    ${formatList(directories, 6)}`
+        ))
       }
     }
 
@@ -301,14 +340,18 @@ function renderEmbeddingProgress(progress: IndexingProgress): string {
   return `[${bar}] ${pct}%  ${chunkStat}`
 }
 
+function formatList(items: string[], max: number): string {
+  if (items.length === 0) {
+    return ''
+  }
 
-const SKIP_REASON_LABELS: Record<string, string> = {
-  ignored_extension: 'unsupported file type',
-  hidden_file: 'hidden file',
-  declaration_file: 'TypeScript declaration file (.d.ts)',
-  too_large: 'file too large',
-  empty_file: 'empty file',
-  exclude_pattern: 'matches exclude pattern',
-  stat_error: 'could not read file',
-  unreadable_directory: 'unreadable directory',
+  const visible = items.slice(0, max)
+  const rest = items.length - visible.length
+  const base = visible.join(' ')
+
+  if (rest > 0) {
+    return chalk.dim(`${base} (+${rest} more)`)
+  }
+
+  return chalk.dim(base)
 }

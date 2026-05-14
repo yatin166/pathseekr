@@ -94,15 +94,28 @@ export class CodebaseIndexer implements IIndexer {
 
             const scanResult = this.fileScanner.scan(absolutePath)
             const scanMs = Date.now() - scanStart
-            const parsableFiles = scanResult.files.filter((f) =>
-                this.parserRegistry.canParse(f.absolutePath)
-            )
+            const parsableFiles = scanResult.files.filter((f) => this.parserRegistry.canParse(f.absolutePath))
+            const unparsableFiles = scanResult.files.filter((f) => !this.parserRegistry.canParse(f.absolutePath))
+
+            const unparsableExtensions = [
+                ...new Set(
+                    unparsableFiles
+                      .map((f) => f.extension)
+                      .filter(Boolean)
+                )
+            ].sort()
 
             job = {
                 ...job,
                 totalFiles: parsableFiles.length,
-                skippedFiles: scanResult.skippedCount + (scanResult.files.length - parsableFiles.length),
-                skippedReasons: scanResult.skippedReasons,
+                skippedFiles: scanResult.skippedCount + unparsableFiles.length,
+                skippedReasons: {
+                    ...scanResult.skippedReasons,
+                    ...(unparsableFiles.length > 0 && { no_parser: unparsableFiles.length }),
+                },
+                skippedExtensions: scanResult.skippedExtensions,
+                skippedDirectories: scanResult.skippedDirectories,
+                unparsableExtensions,
                 status: 'parsing',
                 phase: 'parsing',
             }
