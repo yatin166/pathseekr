@@ -184,7 +184,7 @@ export abstract class BaseParser implements IDocumentParser {
         }
     }
 
-    /*
+    /**
     * Builds a structural summary for a class chunk.
     * Stores the class declaration, fields, and method signatures only.
     * Full method implementations are stored in individual method chunks.
@@ -265,7 +265,7 @@ export abstract class BaseParser implements IDocumentParser {
         return `${base} {`
     }
 
-    /*
+    /**
     * Compresses a multi-line signature to a single readable line
     * extractFunction(
     *   node: Parser.SyntaxNode,
