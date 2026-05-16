@@ -37,7 +37,6 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
 
     async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
         // Ollama does not support true batch embedding in one call
-        // We process concurrently up to the configured batch size
         const batchSize = this.config.embedding.batchSize
         const results: EmbeddingResult[] = []
 
