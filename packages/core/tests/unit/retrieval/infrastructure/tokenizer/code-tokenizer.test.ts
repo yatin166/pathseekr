@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { CodeTokenizer } from '../../../src/retrieval/infrastructure/tokenizer/code-tokenizer'
+import { CodeTokenizer } from '../../../../../src/retrieval/infrastructure/tokenizer/code-tokenizer'
 
 describe('CodeTokenizer', () => {
   let tokenizer: CodeTokenizer

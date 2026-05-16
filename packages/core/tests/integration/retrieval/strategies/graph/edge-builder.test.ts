@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Container } from 'inversify'
 import Database from 'better-sqlite3'
-import { DatabaseConnection } from '../../../src/storage/database'
-import { EdgeBuilder } from '../../../src/retrieval/strategies/graph/edge-builder'
-import { TYPES } from '../../../src/container/types'
+import { DatabaseConnection } from '../../../../../src/storage/database'
+import { EdgeBuilder } from '../../../../../src/retrieval/strategies/graph/edge-builder'
+import { TYPES } from '../../../../../src/container/types'
 
 
 function createTestContainer(): Container {
@@ -126,8 +126,7 @@ describe('EdgeBuilder', () => {
 
       builder.buildAll()
 
-      const edges = getEdgesByType(db, 'contains')
-      expect(edges).toHaveLength(2)
+      expect(getEdgesByType(db, 'contains')).toHaveLength(2)
     })
 
     it('sets from_chunk_id to the class and to_chunk_id to the method', () => {
@@ -173,8 +172,7 @@ describe('EdgeBuilder', () => {
 
       builder.buildAll()
 
-      const edges = getEdgesByType(db, 'contains')
-      expect(edges[0]!.resolved).toBe(1)
+      expect(getEdgesByType(db, 'contains')[0]!.resolved).toBe(1)
     })
 
     it('does not create contains edges for methods with no matching class', () => {
@@ -266,8 +264,7 @@ describe('EdgeBuilder', () => {
 
       builder.buildAll()
 
-      const edges = getEdgesByType(db, 'extends')
-      expect(edges[0]!.resolved).toBe(0)
+      expect(getEdgesByType(db, 'extends')[0]!.resolved).toBe(0)
     })
 
     it('resolves extends edges across different documents', () => {
