@@ -6,7 +6,8 @@
   "license": "MIT",
   "bin": {
     "pathseekr": "./dist/index.js",
-    "seek": "./dist/index.js"
+    "seek": "./dist/index.js",
+    "pseekr": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
