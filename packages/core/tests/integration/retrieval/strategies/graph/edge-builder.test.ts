@@ -46,6 +46,7 @@ interface ChunkInput {
   chunkType: string
   name: string
   metadata: Record<string, unknown>
+  content?: string
 }
 
 function insertChunk(db: Database.Database, chunk: ChunkInput): void {
@@ -55,13 +56,14 @@ function insertChunk(db: Database.Database, chunk: ChunkInput): void {
             language, name, start_line, end_line,
             metadata, created_at
         ) VALUES (
-            ?, ?, '', ?,
+            ?, ?, ?, ?,
             'typescript', ?, 1, 10,
             ?, datetime('now')
         )
     `).run(
     chunk.id,
     chunk.documentId,
+    chunk.content ?? '',
     chunk.chunkType,
     chunk.name,
     JSON.stringify(chunk.metadata)
@@ -502,6 +504,237 @@ describe('EdgeBuilder', () => {
       const edges = getEdgesByType(db, 'extends')
       expect(edges[0]!.resolved).toBe(1)
       expect(edges[0]!.to_chunk_id).toBe('class-base')
+    })
+  })
+
+  describe('calls edges', () => {
+    it('creates a calls edge when one function references another by name', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-parse',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'parseResult',
+        metadata: {},
+        content: 'function parseResult(input) { return input.trim() }',
+      })
+      insertChunk(db, {
+        id: 'fn-process',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'processInput',
+        metadata: {},
+        content: 'function processInput(raw) { return parseResult(raw) }',
+      })
+
+      builder.buildAll()
+
+      const edges = getEdgesByType(db, 'calls')
+      expect(edges).toHaveLength(1)
+      expect(edges[0]!.from_chunk_id).toBe('fn-process')
+      expect(edges[0]!.to_chunk_id).toBe('fn-parse')
+    })
+
+    it('marks calls edges as resolved', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-a',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'formatResult',
+        metadata: {},
+        content: 'function formatResult(x) { return String(x) }',
+      })
+      insertChunk(db, {
+        id: 'fn-b',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'renderOutput',
+        metadata: {},
+        content: 'function renderOutput(data) { return formatResult(data) }',
+      })
+
+      builder.buildAll()
+
+      const edges = getEdgesByType(db, 'calls')
+      expect(edges[0]!.resolved).toBe(1)
+    })
+
+    it('does not create a calls edge when content does not reference another function', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-a',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'formatResult',
+        metadata: {},
+        content: 'function formatResult(x) { return String(x) }',
+      })
+      insertChunk(db, {
+        id: 'fn-b',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'parseInput',
+        metadata: {},
+        content: 'function parseInput(s) { return s.trim() }',
+      })
+
+      builder.buildAll()
+
+      expect(getEdgesByType(db, 'calls')).toHaveLength(0)
+    })
+
+    it('does not create a self-referencing calls edge', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-recursive',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'countdown',
+        metadata: {},
+        content: 'function countdown(n) { if (n <= 0) return; countdown(n - 1) }',
+      })
+
+      builder.buildAll()
+
+      expect(getEdgesByType(db, 'calls')).toHaveLength(0)
+    })
+
+    it('skips ambiguous names that match multiple functions', () => {
+      insertDocument(db, 'doc-1')
+      insertDocument(db, 'doc-2')
+      insertChunk(db, {
+        id: 'fn-process-a',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'processData',
+        metadata: {},
+        content: 'function processData(x) { return x }',
+      })
+      insertChunk(db, {
+        id: 'fn-process-b',
+        documentId: 'doc-2',
+        chunkType: 'function',
+        name: 'processData',
+        metadata: {},
+        content: 'function processData(y) { return y }',
+      })
+      insertChunk(db, {
+        id: 'fn-caller',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'runPipeline',
+        metadata: {},
+        content: 'function runPipeline(d) { return processData(d) }',
+      })
+
+      builder.buildAll()
+
+      // processData is ambiguous — no calls edge created
+      expect(getEdgesByType(db, 'calls')).toHaveLength(0)
+    })
+
+    it('skips names shorter than 4 characters', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-run',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'run',           // 3 chars — below threshold
+        metadata: {},
+        content: 'function run() { return true }',
+      })
+      insertChunk(db, {
+        id: 'fn-caller',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'startPipeline',
+        metadata: {},
+        content: 'function startPipeline() { run() }',
+      })
+
+      builder.buildAll()
+
+      expect(getEdgesByType(db, 'calls')).toHaveLength(0)
+    })
+
+    it('detects calls across document boundaries', () => {
+      insertDocument(db, 'doc-1')
+      insertDocument(db, 'doc-2')
+      insertChunk(db, {
+        id: 'fn-util',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'formatBytes',
+        metadata: {},
+        content: 'function formatBytes(n) { return n + " B" }',
+      })
+      insertChunk(db, {
+        id: 'fn-display',
+        documentId: 'doc-2',
+        chunkType: 'function',
+        name: 'displaySize',
+        metadata: {},
+        content: 'function displaySize(bytes) { return formatBytes(bytes) }',
+      })
+
+      builder.buildAll()
+
+      const edges = getEdgesByType(db, 'calls')
+      expect(edges).toHaveLength(1)
+      expect(edges[0]!.from_chunk_id).toBe('fn-display')
+      expect(edges[0]!.to_chunk_id).toBe('fn-util')
+    })
+
+    it('detects calls from methods to standalone functions', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-helper',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'validateInput',
+        metadata: {},
+        content: 'function validateInput(s) { return s.length > 0 }',
+      })
+      insertChunk(db, {
+        id: 'method-process',
+        documentId: 'doc-1',
+        chunkType: 'method',
+        name: 'MyService.process',
+        metadata: { parentName: 'MyService' },
+        content: 'process(input) { if (!validateInput(input)) throw new Error() }',
+      })
+
+      builder.buildAll()
+
+      const edges = getEdgesByType(db, 'calls')
+      expect(edges).toHaveLength(1)
+      expect(edges[0]!.from_chunk_id).toBe('method-process')
+      expect(edges[0]!.to_chunk_id).toBe('fn-helper')
+    })
+
+    it('uses word boundary matching to avoid partial name matches', () => {
+      insertDocument(db, 'doc-1')
+      insertChunk(db, {
+        id: 'fn-parse',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'parseResult',
+        metadata: {},
+        content: 'function parseResult(s) { return s }',
+      })
+      insertChunk(db, {
+        id: 'fn-other',
+        documentId: 'doc-1',
+        chunkType: 'function',
+        name: 'buildIndex',
+        metadata: {},
+        content: 'function buildIndex(x) { return parseResultData(x) }',
+      })
+
+      builder.buildAll()
+
+      expect(getEdgesByType(db, 'calls')).toHaveLength(0)
     })
   })
 })
