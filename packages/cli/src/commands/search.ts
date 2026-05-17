@@ -53,7 +53,19 @@ export const searchCommand = new Command('search')
       const ready = await retriever.isReady()
 
       if (!ready) {
-        console.log(chalk.yellow('  No search index found. Run: seek index\n'))
+        if (strategy === 'hybrid') {
+          console.log(chalk.yellow('  Hybrid search requires embeddings.\n'))
+          console.log(chalk.dim(
+            '  Generate embeddings:  seek embed' +
+            (contextName ? ` --context ${contextName}` : '')
+          ))
+          console.log(chalk.dim(
+            `  Or search with BM25:  seek search "${query}" --strategy bm25`
+          ))
+          console.log()
+        } else {
+          console.log(chalk.yellow('  No search index found. Run: seek index\n'))
+        }
         return
       }
 

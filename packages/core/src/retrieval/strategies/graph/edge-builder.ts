@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { EdgeQueries, type EdgeType } from './edge-queries'
 import { TYPES } from "../../../container/types";
 import { DatabaseConnection } from "../../../storage/database";
+import { RetrievalQueries } from '../../shared/retrieval-queries'
 
 interface RawContainsPair {
     class_chunk_id: string
@@ -35,6 +36,7 @@ export class EdgeBuilder {
         contains: 1.0,
         extends: 0.9,
         implements: 0.85,
+        calls: 0.6,
     }
 
     constructor(
@@ -72,6 +74,8 @@ export class EdgeBuilder {
 
             this.buildHeritageEdges(classChunks, nameMap)
         })()
+
+        this.buildCallEdges(documentId)
     }
 
     buildAll(): void {
@@ -102,6 +106,8 @@ export class EdgeBuilder {
 
             this.buildHeritageEdges(classChunks, nameMap)
         })()
+
+        this.buildCallEdges()
     }
 
     private buildHeritageEdges(classChunks: RawClassChunk[], nameMap: Map<string, string[]>): void {
@@ -170,5 +176,74 @@ export class EdgeBuilder {
             weight: this.WEIGHTS[edgeType],
             resolved: resolved ? 1 : 0,
         }
+    }
+
+    private buildCallEdges(documentId?: string): void {
+        const db = this.connection.getDb()
+
+        const allCallable = db
+            .prepare(`
+                  SELECT id, name
+                  FROM chunks
+                  WHERE chunk_type IN ('function', 'method')
+              `)
+            .all() as Array<{ id: string; name: string }>
+
+        const nameToId = new Map<string, string>()
+        const ambiguous = new Set<string>()
+
+        for (const chunk of allCallable) {
+            const shortName = chunk.name.includes('.')
+                ? chunk.name.split('.').pop()!
+                : chunk.name
+
+            if (shortName.length < 4) {
+                continue
+            }
+
+            if (nameToId.has(shortName)) {
+                ambiguous.add(shortName)
+            } else {
+                nameToId.set(shortName, chunk.id)
+            }
+        }
+
+        for (const name of ambiguous) {
+            nameToId.delete(name)
+        }
+
+        if (nameToId.size === 0) {
+            return
+        }
+
+        const sourceChunks = (
+            documentId !== undefined
+                ? db.prepare(RetrievalQueries.CHUNKS_BY_FUNCTION_OR_METHOD_AND_DOCUMENT).all(documentId)
+                : db.prepare(RetrievalQueries.CHUNKS_BY_FUNCTION_OR_METHOD).all()
+        ) as Array<{ id: string; name: string; content: string }>
+
+        const insert = db.prepare(EdgeQueries.INSERT)
+
+        db.transaction(() => {
+            for (const source of sourceChunks) {
+                for (const [name, targetId] of nameToId) {
+                    if (targetId === source.id) {
+                        continue
+                    }
+
+                    const regex = new RegExp(`\\b${name}\\b`)
+
+                    if (regex.test(source.content)) {
+                        insert.run(this.edge(
+                            source.id,
+                            targetId,
+                            name,
+                            'calls',
+                            true,
+                        ))
+                    }
+                }
+            }
+        })()
     }
 }

@@ -1,6 +1,6 @@
 import { Tables } from '../../../storage/schema'
 
-export type EdgeType = 'contains' | 'extends' | 'implements'
+export type EdgeType = 'contains' | 'extends' | 'implements' | 'calls'
 
 export const EdgeQueries = {
 

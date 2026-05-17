@@ -32,6 +32,19 @@ export const RetrievalQueries = {
         ORDER BY length(name) ASC LIMIT ?
     `,
 
+    CHUNKS_BY_FUNCTION_OR_METHOD_AND_DOCUMENT: `
+        SELECT id, name, content
+        FROM chunks
+        WHERE chunk_type IN ('function', 'method')
+        AND document_id = ?
+    `,
+
+    CHUNKS_BY_FUNCTION_OR_METHOD: `
+        SELECT id, name, content
+        FROM chunks
+        WHERE chunk_type IN ('function', 'method')
+    `,
+
 } as const
 
 export interface RawChunkWithDocument {
