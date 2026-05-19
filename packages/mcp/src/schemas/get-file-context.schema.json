@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "file_path": {
+      "type": "string",
+      "description": "Absolute path to the source file."
+    },
+    "context_name": {
+      "type": "string",
+      "description": "Context to look up the file in. Uses active context if not specified."
+    }
+  },
+  "required": ["file_path"],
+  "additionalProperties": false
+}

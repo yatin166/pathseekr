@@ -5,7 +5,10 @@
   "description": "Index your codebase locally and find exactly what you're looking for using semantic and keyword search.",
   "license": "MIT",
   "workspaces": [
-    "packages/*"
+    "packages/shared",
+    "packages/core",
+    "packages/cli",
+    "packages/mcp"
   ],
   "scripts": {
     "build": "turbo run build",
