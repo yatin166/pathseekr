@@ -1,9 +1,16 @@
 {
   "name": "@pathseekr/cli",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.0-beta.1",
   "description": "CLI for Pathseekr — index and search your codebase",
+  "main": "dist/index.js",
+  "files": ["dist", "README.md"],
   "license": "MIT",
+  "engines": { "node": ">=18.0.0" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yatin166/pathseekr"
+  },
+  "keywords": ["pathseekr", "code-search", "cli", "ai", "mcp"],
   "bin": {
     "pathseekr": "./dist/index.js",
     "seek": "./dist/index.js",
@@ -18,8 +25,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@pathseekr/core": "*",
-    "@pathseekr/shared": "*",
+    "@pathseekr/core": "0.1.0-beta.1",
+    "@pathseekr/shared": "0.1.0-beta.1",
     "chalk": "^5.3.0",
     "cli-table3": "^0.6.0",
     "commander": "^12.0.0",

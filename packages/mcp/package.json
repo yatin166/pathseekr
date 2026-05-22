@@ -1,26 +1,37 @@
 {
   "name": "@pathseekr/mcp",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "description": "MCP server for Pathseekr — exposes code search to AI assistants",
   "main": "dist/index.js",
+  "files": ["dist", "README.md"],
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yatin166/pathseekr"
+  },
+  "keywords": ["pathseekr", "mcp", "code-search", "ai", "claude"],
   "bin": {
-    "pathseekr-mcp": "dist/index.js"
+    "pathseekr-mcp": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
+    "postbuild": "chmod +x dist/index.js",
     "dev": "ts-node src/index.ts",
-    "start": "node dist/index.js"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@pathseekr/core": "*",
-    "@pathseekr/shared": "*",
+    "@pathseekr/core": "0.1.0-beta.1",
+    "@pathseekr/shared": "0.1.0-beta.1",
+    "dotenv": "^16.4.0",
     "reflect-metadata": "^0.2.0",
-    "dotenv": "^16.0.0",
-    "zod": "^3.0.0"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.4.0"
   }
 }
