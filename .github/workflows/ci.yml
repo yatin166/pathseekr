@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Test with Node.js ${{ matrix.node-version }}
+    name: Test & Build with NodeJS version ${{ matrix.node-version }}
     runs-on: ubuntu-latest
 
     strategy:
