@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "What to search for — a concept, class name, function, or description."
+    },
+    "context_name": {
+      "type": "string",
+      "description": "Context to search in. Uses active context if not specified."
+    },
+    "strategy": {
+      "type": "string",
+      "enum": ["graph", "bm25", "vector", "hybrid"],
+      "description": "Search strategy. graph uses structural traversal, bm25 uses keyword matching. Defaults to graph."
+    },
+    "limit": {
+      "type": "number",
+      "description": "Number of results to return. Defaults to 10.",
+      "minimum": 1,
+      "maximum": 50
+    }
+  },
+  "required": ["query"],
+  "additionalProperties": false
+}

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Symbol name or partial name to search for."
+    },
+    "context_name": {
+      "type": "string",
+      "description": "Context to search in. Uses active context if not specified."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["class", "interface", "type", "function", "method"],
+      "description": "Filter by symbol type. Returns all types if not specified."
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "context_name": {
+      "type": "string",
+      "description": "Context to get the project map for. Uses active context if not specified."
+    }
+  },
+  "additionalProperties": false
+}
