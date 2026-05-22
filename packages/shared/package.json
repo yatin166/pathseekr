@@ -1,19 +1,24 @@
 {
   "name": "@pathseekr/shared",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.0-beta.1",
   "description": "Shared types and interfaces for Pathseekr",
-  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "license": "MIT",
+  "engines": { "node": ">=22.0.0" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yatin166/pathseekr"
+  },
+  "keywords": ["pathseekr", "code-search", "types"],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
-    "lint": "eslint src/**/*.ts",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
   }
 }
