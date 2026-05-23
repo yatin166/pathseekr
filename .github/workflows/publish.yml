@@ -32,27 +32,23 @@ jobs:
         run: npm ci
 
       - name: Build all packages
-        run: npm run build
+        run: |
+          npm run build --workspace=packages/shared
+          npm run build --workspace=packages/core
+          npm run build --workspace=packages/cli
+          npm run build --workspace=packages/mcp
 
       - name: Copy migration files
         run: cp -r packages/core/src/storage/migrations packages/core/dist/storage/migrations
 
       - name: Publish @pathseekr/shared
-        run: npm publish --workspace=packages/shared --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=packages/shared --access=public --provenance
 
       - name: Publish @pathseekr/core
-        run: npm publish --workspace=packages/core --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=packages/core --access=public --provenance
 
       - name: Publish @pathseekr/cli
-        run: npm publish --workspace=packages/cli --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=packages/cli --access=public --provenance
 
       - name: Publish @pathseekr/mcp
-        run: npm publish --workspace=packages/mcp --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace=packages/mcp --access=public --provenance
