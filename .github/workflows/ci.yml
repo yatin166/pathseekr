@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: ['**']
+  workflow_call:
 
 jobs:
   test:
-    name: Test & Build with NodeJS version ${{ matrix.node-version }}
+    name: Build & Test with NodeJS ${{ matrix.node-version }}
     runs-on: ubuntu-latest
 
     strategy:
